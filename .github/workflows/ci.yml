@@ -57,7 +57,7 @@ jobs:
       - name: Build wheel
         run: |
           cp Finch-mlir/setup.py .
-          python -m build
+          python -m build --wheel
 
       - name: Upload wheel
         uses: actions/upload-artifact@v4
