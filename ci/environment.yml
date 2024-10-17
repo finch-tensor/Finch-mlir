@@ -1,0 +1,11 @@
+name: Finch-mlir-dev
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python
+  - cmake
+  - ninja
+  - pybind11
+  - pip:
+    - build

@@ -1,0 +1,66 @@
+name: Wheel
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main  # NOTE: to remove
+  schedule:
+    # At 09:00 on Monday. (see https://crontab.guru)
+    - cron: '0 9 * * 1'
+
+defaults:
+  run:
+    shell: bash -leo pipefail {0}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-wheel:
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        python: ['3.10']
+    runs-on: ${{ matrix.os }}
+    env:
+      LLVM_SOURCE_DIR: ${{ github.workspace }}/llvm-project
+      FINCH_MLIR_SOURCE_DIR: ${{ github.workspace }}/Finch-mlir
+    steps:
+      - name: Checkout Finch-mlir
+        uses: actions/checkout@v4
+        with:
+          path: 'Finch-mlir'
+
+      - name: Checkout LLVM
+        uses: actions/checkout@v4
+        with:
+          repository: llvm/llvm-project
+          ref: '4091bc61e315f187829dca877dd908a07ba9cb91'  # Latest commit as of 2024-10-17
+          path: 'llvm-project'
+
+      - name: Setup env
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: Finch-mlir/ci/environment.yml
+          init-shell: >-
+            bash
+          cache-environment: true
+          cache-downloads: true
+          post-cleanup: 'all'
+          create-args: >-
+            python=${{ matrix.python }}
+
+      - name: Build wheel
+        run: |
+          cp Finch-mlir/setup.py .
+          python -m build
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          path: dist/*.whl
+          name: build_artifact_finch_mlir
