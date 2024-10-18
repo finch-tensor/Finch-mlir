@@ -1,4 +1,5 @@
-import sys, os
+import os
+import sys
 import subprocess
 from pathlib import Path
 
@@ -23,6 +24,7 @@ class CMakeBuild(build_ext):
         extdir = ext_fullpath.parent.resolve()
         install_dir = extdir
 
+        # BUILD LLVM
         llvm_cmake_args = [
             "-G Ninja",
             f"-B{llvm_build_dir}",
@@ -37,15 +39,16 @@ class CMakeBuild(build_ext):
         subprocess.run(
             ["cmake", ext.sourcedir, *llvm_cmake_args], cwd=llvm_build_dir, check=True,
         )
-
         subprocess.run(["ninja"], cwd=llvm_build_dir, check=True)
 
+        # INSTALL LLVM
         subprocess.run(
             ["cmake", f"-DCMAKE_INSTALL_PREFIX={llvm_install_dir}", "-Pcmake_install.cmake"],
             cwd=llvm_build_dir,
             check=True,
         )
 
+        # BUILD FINCH DIALECT
         dialect_cmake_args = [
             "-G Ninja",
             f"-B{finch_build_dir}",
@@ -56,11 +59,9 @@ class CMakeBuild(build_ext):
         subprocess.run(
             ["cmake", FINCH_MLIR_SOURCE_DIR, *dialect_cmake_args], cwd=finch_build_dir, check=True,
         )
+        subprocess.run(["ninja"], cwd=finch_build_dir, check=True)
 
-        subprocess.run(
-            ["ninja"], cwd=finch_build_dir, check=True,
-        )
-
+        # INSTALL FINCH DIALECT
         subprocess.run(
             ["cmake", f"-DCMAKE_INSTALL_PREFIX={install_dir}", "-Pcmake_install.cmake"],
             cwd=finch_build_dir,
