@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import subprocess
 from pathlib import Path
@@ -67,6 +68,14 @@ class CMakeBuild(build_ext):
             cwd=finch_build_dir,
             check=True,
         )
+
+        # We need unversioned copies of `mlir_c_runner_utils` and `mlir_float16_utils`.
+        install_dir_lib = install_dir / 'lib'
+        files = [
+            (f, f.replace(".20.0git", "")) for f in os.listdir(install_dir_lib) if f.startswith("libmlir_")
+        ]
+        for file, new_file in files:
+            shutil.copy(install_dir_lib / file, install_dir_lib / new_file)
 
 
 def create_dir(name: str) -> Path:
