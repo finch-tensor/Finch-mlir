@@ -29,12 +29,13 @@ class CMakeBuild(build_ext):
         llvm_cmake_args = [
             "-G Ninja",
             f"-B{llvm_build_dir}",
-            "-DLLVM_ENABLE_PROJECTS=mlir;llvm;clang;lld",
+            "-DLLVM_ENABLE_PROJECTS=mlir",
             "-DLLVM_TARGETS_TO_BUILD=Native",
             "-DCMAKE_BUILD_TYPE=Release",
             "-DMLIR_ENABLE_BINDINGS_PYTHON=ON",
             f"-DPython3_EXECUTABLE={PYTHON_EXECUTABLE}",
             "-DLLVM_INSTALL_UTILS=ON",
+            "-DLLVM_CCACHE_BUILD=ON",
         ]
 
         subprocess.run(
