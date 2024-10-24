@@ -31,11 +31,12 @@ class CMakeBuild(build_ext):
             f"-B{llvm_build_dir}",
             "-DLLVM_ENABLE_PROJECTS=mlir",
             "-DLLVM_TARGETS_TO_BUILD=Native",
-            "-DCMAKE_BUILD_TYPE=Release",
             "-DMLIR_ENABLE_BINDINGS_PYTHON=ON",
             f"-DPython3_EXECUTABLE={PYTHON_EXECUTABLE}",
             "-DLLVM_INSTALL_UTILS=ON",
             "-DLLVM_CCACHE_BUILD=ON",
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON",
         ]
 
         subprocess.run(
@@ -56,6 +57,7 @@ class CMakeBuild(build_ext):
             f"-B{finch_build_dir}",
             f"-DMLIR_DIR={llvm_install_dir}/lib/cmake/mlir",
             f"-DLLVM_EXTERNAL_LIT={llvm_build_dir}/bin/llvm-lit",
+            "-DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON",
         ]
 
         subprocess.run(
@@ -69,14 +71,6 @@ class CMakeBuild(build_ext):
             cwd=finch_build_dir,
             check=True,
         )
-
-        # We need unversioned copies of `mlir_c_runner_utils` and `mlir_float16_utils`.
-        install_dir_lib = install_dir / 'lib'
-        files = [
-            (f, f.replace(".20.0git", "")) for f in os.listdir(install_dir_lib) if f.startswith("libmlir_")
-        ]
-        for file, new_file in files:
-            shutil.copy(install_dir_lib / file, install_dir_lib / new_file)
 
         # Move Python package out of nested directories.
         python_package_dir = install_dir / "python_packages" / "finch" / "mlir_finch"
