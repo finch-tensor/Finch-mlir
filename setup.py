@@ -91,11 +91,11 @@ finch_build_dir = create_dir("finch-build")
 
 
 setup(
-    name="mlir_finch",
+    name="finch-mlir",
     version="0.0.1",
     include_package_data=True,
-    description="MLIR Finch distribution as wheel.",
-    long_description="MLIR Finch distribution as wheel.",
+    description="Finch MLIR distribution as wheel.",
+    long_description="Finch MLIR distribution as wheel.",
     long_description_content_type="text/markdown",
     ext_modules=[CMakeExtension("mlir_finch_ext", sourcedir=f"{LLVM_SOURCE_DIR}/llvm")],
     cmdclass={"build_ext": CMakeBuild},
