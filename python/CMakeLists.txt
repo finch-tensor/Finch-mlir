@@ -35,9 +35,9 @@ declare_mlir_python_extension(FinchPythonSources.Extension
 
 add_mlir_python_common_capi_library(FinchPythonCAPI
   INSTALL_COMPONENT FinchPythonModules
-  INSTALL_DESTINATION mlir_finch/_mlir_libs
-  OUTPUT_DIRECTORY "${MLIR_BINARY_DIR}/mlir_finch/_mlir_libs"
-  RELATIVE_INSTALL_ROOT "../.."
+  INSTALL_DESTINATION python_packages/finch/mlir_finch/_mlir_libs
+  OUTPUT_DIRECTORY "${MLIR_BINARY_DIR}/python_packages/finch/mlir_finch/_mlir_libs"
+  RELATIVE_INSTALL_ROOT "../../../.."
   DECLARED_SOURCES
     FinchPythonSources
     # TODO: Remove this in favor of showing fine grained registration once
@@ -54,8 +54,8 @@ add_mlir_python_common_capi_library(FinchPythonCAPI
 ################################################################################
 
 add_mlir_python_modules(FinchPythonModules
-  ROOT_PREFIX "${MLIR_BINARY_DIR}/mlir_finch"
-  INSTALL_PREFIX "mlir_finch"
+  ROOT_PREFIX "${MLIR_BINARY_DIR}/python_packages/finch/mlir_finch"
+  INSTALL_PREFIX "python_packages/finch/mlir_finch"
   DECLARED_SOURCES
     FinchPythonSources
     # TODO: Remove this in favor of showing fine grained registration once

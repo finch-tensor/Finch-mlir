@@ -61,4 +61,10 @@ tools = [
 
 llvm_config.add_tool_substitutions(tools, tool_dirs)
 
-llvm_config.with_environment("PYTHONPATH", config.mlir_obj_dir, append_path=True)
+llvm_config.with_environment(
+    "PYTHONPATH",
+    [
+        os.path.join(config.mlir_obj_dir, "python_packages", "finch"),
+    ],
+    append_path=True,
+)

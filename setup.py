@@ -78,6 +78,11 @@ class CMakeBuild(build_ext):
         for file, new_file in files:
             shutil.copy(install_dir_lib / file, install_dir_lib / new_file)
 
+        # Move Python package out of nested directories.
+        python_package_dir = install_dir / "python_packages" / "finch" / "mlir_finch"
+        shutil.copytree(python_package_dir, install_dir / "mlir_finch")
+        shutil.rmtree(install_dir / "python_packages")
+
 
 def create_dir(name: str) -> Path:
     path = Path.cwd() / "build" / name
