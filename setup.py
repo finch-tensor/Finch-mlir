@@ -9,8 +9,6 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 
-LLVM_SOURCE_DIR = "./llvm-project"  # os.environ["LLVM_SOURCE_DIR"]
-FINCH_MLIR_SOURCE_DIR = "./Finch-mlir"  # os.environ["FINCH_MLIR_SOURCE_DIR"]
 PYTHON_EXECUTABLE = str(Path(sys.executable))
 
 
@@ -33,6 +31,10 @@ class CMakeBuild(build_ext):
         install_dir = extdir
         ninja_executable_path = Path(ninja.BIN_DIR) / "ninja"
 
+        extra_flags = []
+        if sys.platform.startswith("darwin"):
+            extra_flags.append("-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0")
+
         # BUILD LLVM
         llvm_cmake_args = [
             "-G Ninja",
@@ -46,6 +48,7 @@ class CMakeBuild(build_ext):
             "-DCMAKE_BUILD_TYPE=Release",
             "-DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON",
             f"-DCMAKE_MAKE_PROGRAM:FILEPATH={ninja_executable_path}",
+            *extra_flags,
         ]
 
         subprocess.run(
@@ -68,6 +71,7 @@ class CMakeBuild(build_ext):
             f"-DLLVM_EXTERNAL_LIT={llvm_build_dir}/bin/llvm-lit",
             "-DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON",
             f"-DCMAKE_MAKE_PROGRAM:FILEPATH={ninja_executable_path}",
+            *extra_flags,
         ]
 
         subprocess.run(
@@ -109,8 +113,8 @@ setup(
     long_description_content_type="text/markdown",
     ext_modules=[CMakeExtension(
         "mlir_finch_ext",
-        llvm_source_dir=f"{LLVM_SOURCE_DIR}/llvm",
-        finch_source_dir=FINCH_MLIR_SOURCE_DIR,
+        llvm_source_dir=f"./llvm-project/llvm",
+        finch_source_dir="./Finch-mlir",
     )],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
