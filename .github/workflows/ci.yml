@@ -103,8 +103,8 @@ jobs:
           cibuildwheel --output-dir ./wheelhouse
 
       - name: Download cache from container ubuntu
-        if: (matrix.OS == 'ubuntu-20.04' && matrix.ARCH == 'x86_64') && (success() || failure())
-        working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+        if: (matrix.os == 'ubuntu-20.04' && matrix.arch == 'x86_64') && (success() || failure())
+        #working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
         run: |
           ccache -s
           rm -rf $HOST_CCACHE_DIR

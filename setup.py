@@ -4,12 +4,13 @@ import sys
 import subprocess
 from pathlib import Path
 
+import ninja
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 
-LLVM_SOURCE_DIR = "./llvm-project" #os.environ["LLVM_SOURCE_DIR"]
-FINCH_MLIR_SOURCE_DIR = "./Finch-mlir" #os.environ["FINCH_MLIR_SOURCE_DIR"]
+LLVM_SOURCE_DIR = "./llvm-project"  # os.environ["LLVM_SOURCE_DIR"]
+FINCH_MLIR_SOURCE_DIR = "./Finch-mlir"  # os.environ["FINCH_MLIR_SOURCE_DIR"]
 PYTHON_EXECUTABLE = str(Path(sys.executable))
 
 
@@ -30,6 +31,7 @@ class CMakeBuild(build_ext):
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
         install_dir = extdir
+        ninja_executable_path = Path(ninja.BIN_DIR) / "ninja"
 
         # BUILD LLVM
         llvm_cmake_args = [
@@ -43,12 +45,13 @@ class CMakeBuild(build_ext):
             "-DLLVM_CCACHE_BUILD=ON",
             "-DCMAKE_BUILD_TYPE=Release",
             "-DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON",
+            f"-DCMAKE_MAKE_PROGRAM:FILEPATH={ninja_executable_path}",
         ]
 
         subprocess.run(
             ["cmake", ext.llvm_source_dir, *llvm_cmake_args], cwd=llvm_build_dir, check=True,
         )
-        subprocess.run(["ninja"], cwd=llvm_build_dir, check=True)
+        subprocess.run([ninja_executable_path], cwd=llvm_build_dir, check=True)
 
         # INSTALL LLVM
         subprocess.run(
@@ -64,12 +67,13 @@ class CMakeBuild(build_ext):
             f"-DMLIR_DIR={llvm_install_dir}/lib/cmake/mlir",
             f"-DLLVM_EXTERNAL_LIT={llvm_build_dir}/bin/llvm-lit",
             "-DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON",
+            f"-DCMAKE_MAKE_PROGRAM:FILEPATH={ninja_executable_path}",
         ]
 
         subprocess.run(
             ["cmake", ext.finch_source_dir, *dialect_cmake_args], cwd=finch_build_dir, check=True,
         )
-        subprocess.run(["ninja"], cwd=finch_build_dir, check=True)
+        subprocess.run([ninja_executable_path], cwd=finch_build_dir, check=True)
 
         # INSTALL FINCH DIALECT
         subprocess.run(

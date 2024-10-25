@@ -8,15 +8,15 @@ requires = [
     "numpy",
     "PyYAML",
 ]
-build-backend = "setuptools.build_meta"
+#build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-build-verbosity = 3
+build-verbosity = 0
 # manylinux-aarch64-image = "manylinux_2_28"
 # manylinux-x86_64-image = "sameli/manylinux_2_28_x86_64_cuda_12.3"
 
 [tool.cibuildwheel.linux]
-build = "cp310-*"
+build = "cp310-* cp311-* cp312-*"
 skip = ["*-manylinux_i686", "*-musllinux*"]
 environment = { PATH = "/usr/lib/ccache:/usr/lib64/ccache:/usr/lib/ccache/bin:$PATH" }
 # environment = { PATH = "/usr/lib/ccache:/usr/lib64/ccache:/usr/lib/ccache/bin:$PATH", PIP_FIND_LINKS = "https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest" }
