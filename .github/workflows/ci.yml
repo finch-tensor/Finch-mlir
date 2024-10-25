@@ -23,8 +23,8 @@ jobs:
   build-wheel:
     strategy:
       matrix:
-        os: ['macos-13', 'macos-14']  # 'ubuntu-24.04', , 'windows-2022'
-        arch: ['x86_64', 'aarch64']
+        os: ['ubuntu-24.04']  #['macos-13', 'macos-14']  # 'ubuntu-24.04', , 'windows-2022'
+        arch: ['x86_64']  # , 'aarch64'
         python: ['3.10']  # , '3.11', '3.12'
         exclude:
           - os: 'macos-13'
@@ -70,11 +70,24 @@ jobs:
           post-cleanup: 'all'
           create-args: >-
             python=${{ matrix.python }}
-
-      - name: Build wheel
+      
+      - name: Set env variables
         run: |
-          cp Finch-mlir/setup.py .
-          python -m build --wheel
+          echo "HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"" >> $GITHUB_ENV
+
+      # - name: Build wheel
+      #   run: |
+      #     cp Finch-mlir/setup.py .
+      #     python -m build --wheel
+
+      # - name: Install cross-compilation toolchain
+      #   shell: bash
+      #   if: ${{ inputs.MATRIX_OS == 'ubuntu-24.04' && inputs.MATRIX_ARCH == 'aarch64' }}
+      #   run: |
+
+      #     sudo apt-get update
+      #     sudo apt-get install -y binutils-aarch64-linux-gnu \
+      #       g++-aarch64-linux-gnu gcc-aarch64-linux-gnu
 
       # - name: Set up QEMU
       #   if: ${{ matrix.os == 'ubuntu-24.04' && matrix.arch == 'aarch64' }}
@@ -82,15 +95,28 @@ jobs:
       #   with:
       #     platforms: ${{ matrix.arch }}
 
-      # - name: cibuildwheel
-      #   run: |
-      #     CIBW_ARCHS=${{ matrix.arch }} \
-      #     cibuildwheel --output-dir ./dist
+      - name: cibuildwheel run
+        run: |
+          mv ./Finch-mlir/setup.py .
+          mv ./Finch-mlir/requirements.txt .
+          mv ./Finch-mlir/pyproject.toml .
+          cibuildwheel --output-dir ./wheelhouse
+
+      - name: Download cache from container ubuntu
+        if: (matrix.OS == 'ubuntu-20.04' && matrix.ARCH == 'x86_64') && (success() || failure())
+        working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+        run: |
+          ccache -s
+          rm -rf $HOST_CCACHE_DIR
+          mv ./wheelhouse/.ccache $HOST_CCACHE_DIR
+          # shouldn't be /output/.ccache?
+          ls -la $HOST_CCACHE_DIR
+          ccache -s
 
       - name: Upload wheel
         uses: actions/upload-artifact@v4
         with:
-          path: dist/*.whl
+          path: wheelhouse/*.whl
           name: artifact_finch_mlir-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.python }}
 
   # TODO: run pydata/sparse MLIR tests
@@ -108,13 +134,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: artifact_finch_mlir-*
-          path: dist
+          path: wheelhouse
           merge-multiple: true
 
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: 'dist/*.whl'
+          artifacts: 'wheelhouse/*.whl'
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: latest
           name: latest

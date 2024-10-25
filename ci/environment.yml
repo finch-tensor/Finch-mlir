@@ -9,3 +9,4 @@ dependencies:
   - pybind11
   - pip:
     - build
+    - cibuildwheel

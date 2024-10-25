@@ -8,15 +8,21 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 
-LLVM_SOURCE_DIR = os.environ["LLVM_SOURCE_DIR"]
-FINCH_MLIR_SOURCE_DIR = os.environ["FINCH_MLIR_SOURCE_DIR"]
+LLVM_SOURCE_DIR = "./llvm-project" #os.environ["LLVM_SOURCE_DIR"]
+FINCH_MLIR_SOURCE_DIR = "./Finch-mlir" #os.environ["FINCH_MLIR_SOURCE_DIR"]
 PYTHON_EXECUTABLE = str(Path(sys.executable))
 
 
 class CMakeExtension(Extension):
-    def __init__(self, name: str, sourcedir: str = "") -> None:
+    def __init__(
+        self,
+        name: str,
+        llvm_source_dir: str,
+        finch_source_dir: str,
+    ) -> None:
         super().__init__(name, sources=[])
-        self.sourcedir = os.fspath(Path(sourcedir).resolve())
+        self.llvm_source_dir = os.fspath(Path(llvm_source_dir).resolve())
+        self.finch_source_dir = os.fspath(Path(finch_source_dir).resolve())
 
 
 class CMakeBuild(build_ext):
@@ -40,7 +46,7 @@ class CMakeBuild(build_ext):
         ]
 
         subprocess.run(
-            ["cmake", ext.sourcedir, *llvm_cmake_args], cwd=llvm_build_dir, check=True,
+            ["cmake", ext.llvm_source_dir, *llvm_cmake_args], cwd=llvm_build_dir, check=True,
         )
         subprocess.run(["ninja"], cwd=llvm_build_dir, check=True)
 
@@ -61,7 +67,7 @@ class CMakeBuild(build_ext):
         ]
 
         subprocess.run(
-            ["cmake", FINCH_MLIR_SOURCE_DIR, *dialect_cmake_args], cwd=finch_build_dir, check=True,
+            ["cmake", ext.finch_source_dir, *dialect_cmake_args], cwd=finch_build_dir, check=True,
         )
         subprocess.run(["ninja"], cwd=finch_build_dir, check=True)
 
@@ -97,7 +103,11 @@ setup(
     description="Finch MLIR distribution as wheel.",
     long_description="Finch MLIR distribution as wheel.",
     long_description_content_type="text/markdown",
-    ext_modules=[CMakeExtension("mlir_finch_ext", sourcedir=f"{LLVM_SOURCE_DIR}/llvm")],
+    ext_modules=[CMakeExtension(
+        "mlir_finch_ext",
+        llvm_source_dir=f"{LLVM_SOURCE_DIR}/llvm",
+        finch_source_dir=FINCH_MLIR_SOURCE_DIR,
+    )],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
 )
