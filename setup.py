@@ -9,9 +9,6 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 
-PYTHON_EXECUTABLE = str(Path(sys.executable))
-
-
 class CMakeExtension(Extension):
     def __init__(
         self,
@@ -30,6 +27,8 @@ class CMakeBuild(build_ext):
         extdir = ext_fullpath.parent.resolve()
         install_dir = extdir
         ninja_executable_path = Path(ninja.BIN_DIR) / "ninja"
+        PYTHON_EXECUTABLE = str(Path(sys.executable))
+
 
         extra_flags = []
         if sys.platform.startswith("darwin"):
@@ -48,6 +47,8 @@ class CMakeBuild(build_ext):
             "-DCMAKE_BUILD_TYPE=Release",
             "-DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON",
             f"-DCMAKE_MAKE_PROGRAM:FILEPATH={ninja_executable_path}",
+            "-DLLVM_ENABLE_ZLIB=OFF",
+            "-DLLVM_ENABLE_ZSTD=OFF",
             *extra_flags,
         ]
 
@@ -71,6 +72,9 @@ class CMakeBuild(build_ext):
             f"-DLLVM_EXTERNAL_LIT={llvm_build_dir}/bin/llvm-lit",
             "-DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON",
             f"-DCMAKE_MAKE_PROGRAM:FILEPATH={ninja_executable_path}",
+            "-DLLVM_ENABLE_ZLIB=OFF",
+            "-DLLVM_ENABLE_ZSTD=OFF",
+            f"-DPython3_EXECUTABLE={PYTHON_EXECUTABLE}",
             *extra_flags,
         ]
 

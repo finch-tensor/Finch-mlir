@@ -80,18 +80,22 @@ jobs:
           ccache --set-config=compiler_check=content
           ccache --set-config=sloppiness=locale,time_macros
 
-      - name: Setup env
-        uses: mamba-org/setup-micromamba@v2
-        with:
-          environment-file: Finch-mlir/ci/environment.yml
-          init-shell: >-
-            bash
-          cache-environment: true
-          cache-downloads: true
-          post-cleanup: 'all'
-          create-args: >-
-            python=${{ matrix.python }}
-      
+      # - name: Setup env
+      #   uses: mamba-org/setup-micromamba@v2
+      #   with:
+      #     environment-file: Finch-mlir/ci/environment.yml
+      #     init-shell: >-
+      #       bash
+      #     cache-environment: true
+      #     cache-downloads: true
+      #     post-cleanup: 'all'
+      #     create-args: >-
+      #       python=${{ matrix.python }}
+
+      - name: pip install standard tools
+        shell: bash
+        run: pip install cibuildwheel wheel
+
       - name: Set env variables
         run: |
           echo "HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"" >> $GITHUB_ENV
