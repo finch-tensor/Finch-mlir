@@ -35,14 +35,15 @@ fi
 # hack until https://github.com/pypa/cibuildwheel/issues/1030 is fixed
 # Place ccache folder in /outputs
 HOST_CCACHE_DIR="/host${HOST_CCACHE_DIR:-/home/runner/work/Finch-mlir/Finch-mlir/.ccache}"
-if [ -d "$HOST_CCACHE_DIR" ]; then
-  ls -l "$HOST_CCACHE_DIR"
-  mkdir -p /output
-  cp -r $HOST_CCACHE_DIR /output/.ccache
-  ls -la /output/.ccache
-fi
+# if [ -d "$HOST_CCACHE_DIR" ]; then
+#   ls -l "$HOST_CCACHE_DIR"
+#   mkdir -p /output
+#   #cp -r $HOST_CCACHE_DIR /output/.ccache
+#   mv $HOST_CCACHE_DIR /output/.ccache
+#   ls -la /output/.ccache
+# fi
 
-ccache -o cache_dir="/output/.ccache"
+ccache -o cache_dir="$HOST_CCACHE_DIR" # ccache -o cache_dir="/output/.ccache"
 ccache -M 5 1
 # Show ccache stats
 echo "Cache stats:"
