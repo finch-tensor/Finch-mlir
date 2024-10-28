@@ -23,11 +23,13 @@ jobs:
   build-wheel:
     strategy:
       matrix:
-        os: ['macos-12']  #['macos-13', 'macos-14']  # 'ubuntu-24.04', , 'windows-2022'
-        arch: ['x86_64']  # , 'aarch64'
+        os: ['ubuntu-24.04', 'macos-12', 'macos-14']  #'macos-13', 'windows-2022'
+        arch: ['x86_64', 'aarch64']
         python: ['3.10']  # , '3.11', '3.12'
         exclude:
-          - os: 'macos-13'
+          - os: 'ubuntu-24.04'  # needs qemu setup
+            arch: 'aarch64'
+          - os: 'macos-12'
             arch: 'aarch64'
           - os: 'macos-14'
             arch: 'x86_64'
