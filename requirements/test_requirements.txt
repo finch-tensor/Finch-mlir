@@ -1,0 +1,5 @@
+pytest
+pytest-cov
+PyYAML
+scipy
+sparse @ git+https://github.com/pydata/sparse@updated-llvm-nightly-test

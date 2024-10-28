@@ -23,11 +23,11 @@ jobs:
   build-wheel:
     strategy:
       matrix:
-        os: ['ubuntu-24.04', 'macos-12', 'macos-14']  #'macos-13', 'windows-2022'
+        os: ['ubuntu-24.04', 'macos-12', 'macos-14']  # TODO: 'windows-2022'
         arch: ['x86_64', 'aarch64']
-        python: ['3.10']  # , '3.11', '3.12'
+        python: ['3.10']
         exclude:
-          - os: 'ubuntu-24.04'  # needs qemu setup
+          - os: 'ubuntu-24.04'  # TODO: needs qemu setup
             arch: 'aarch64'
           - os: 'macos-12'
             arch: 'aarch64'
@@ -57,15 +57,14 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1
         with:
           key: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.python }}
-          max-size: "1G"
+          max-size: "3G"
           verbose: 2
           variant: ccache
 
-      - name: Configure ccache
+      - name: Configure ccache - ubuntu & macos
         if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')
         shell: bash
         run: |
-          
           if [ x"${{ contains(matrix.os, 'macos') }}" == x"true" ]; then
             echo "/usr/local/opt/ccache/libexec:/opt/homebrew/opt/ccache/libexec" >> $GITHUB_PATH
           else
@@ -75,24 +74,11 @@ jobs:
       - name: Configure ccache
         shell: bash
         run: |
-          
           ccache -p
           ccache -z
           # See https://github.com/hendrikmuhs/ccache-action/issues/146
           ccache --set-config=compiler_check=content
           ccache --set-config=sloppiness=locale,time_macros
-
-      # - name: Setup env
-      #   uses: mamba-org/setup-micromamba@v2
-      #   with:
-      #     environment-file: Finch-mlir/ci/environment.yml
-      #     init-shell: >-
-      #       bash
-      #     cache-environment: true
-      #     cache-downloads: true
-      #     post-cleanup: 'all'
-      #     create-args: >-
-      #       python=${{ matrix.python }}
 
       - name: pip install standard tools
         shell: bash
@@ -102,47 +88,24 @@ jobs:
         run: |
           echo "HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"" >> $GITHUB_ENV
 
-      - name: set ENV macos
+      - name: set env variables - macos
         if: contains(matrix.os, 'macos')
         shell: bash
         run: |
           echo "MACOSX_DEPLOYMENT_TARGET=11.0" | tee -a $GITHUB_ENV
 
-      # - name: Build wheel
-      #   run: |
-      #     cp Finch-mlir/setup.py .
-      #     python -m build --wheel
-
-      # - name: Install cross-compilation toolchain
-      #   shell: bash
-      #   if: ${{ inputs.MATRIX_OS == 'ubuntu-24.04' && inputs.MATRIX_ARCH == 'aarch64' }}
-      #   run: |
-
-      #     sudo apt-get update
-      #     sudo apt-get install -y binutils-aarch64-linux-gnu \
-      #       g++-aarch64-linux-gnu gcc-aarch64-linux-gnu
-
-      # - name: Set up QEMU
-      #   if: ${{ matrix.os == 'ubuntu-24.04' && matrix.arch == 'aarch64' }}
-      #   uses: docker/setup-qemu-action@v2
-      #   with:
-      #     platforms: ${{ matrix.arch }}
-
       - name: cibuildwheel run
         run: |
           mv ./Finch-mlir/setup.py .
-          mv ./Finch-mlir/requirements.txt .
           mv ./Finch-mlir/pyproject.toml .
           cibuildwheel --output-dir ./wheelhouse
 
       - name: Download cache from container ubuntu
         if: (matrix.os == 'ubuntu-24.04' && matrix.arch == 'x86_64') && (success() || failure())
-        #working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
         run: |
           ccache -s
           rm -rf $HOST_CCACHE_DIR
           mv ./wheelhouse/.ccache $HOST_CCACHE_DIR
-          # shouldn't be /output/.ccache?
           ls -la $HOST_CCACHE_DIR
           ccache -s
 
@@ -151,10 +114,6 @@ jobs:
         with:
           path: wheelhouse/*.whl
           name: artifact_finch_mlir-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.python }}
-
-  # TODO: run pydata/sparse MLIR tests
-  # run-tests:
-  #   ...
 
   release-wheel:
     runs-on: 'ubuntu-latest'

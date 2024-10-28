@@ -8,55 +8,33 @@ requires = [
     "numpy",
     "PyYAML",
 ]
-#build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
 build-verbosity = 1
-# manylinux-aarch64-image = "manylinux_2_28"
-# manylinux-x86_64-image = "sameli/manylinux_2_28_x86_64_cuda_12.3"
+test-requires = [
+    "pytest",
+    "pytest-cov",
+    "PyYAML",
+    "scipy",
+    "sparse@git+https://github.com/pydata/sparse@updated-llvm-nightly-test"
+]
+test-command = "SPARSE_BACKEND=MLIR pytest --pyargs sparse.mlir_backend"
 
 [tool.cibuildwheel.linux]
 build = "cp310-* cp311-* cp312-*"
 skip = ["*-manylinux_i686", "*-musllinux*"]
 environment = { PATH = "/usr/lib/ccache:/usr/lib64/ccache:/usr/lib/ccache/bin:$PATH" }
 before-build = [
-    "pip install -r requirements.txt",
+    "pip install -r {project}/Finch-mlir/requirements/requirements.txt",
     "{project}/Finch-mlir/scripts/docker_prepare_ccache.sh"
 ]
-environment-pass = [
-    # "CIBW_ARCHS",
-    "HOST_CCACHE_DIR",
-]
-# environment-pass = [
-#     "APPLY_PATCHES",
-#     "BUILD_CUDA",
-#     "BUILD_AMDGPU",
-#     "BUILD_OPENMP",
-#     "BUILD_VULKAN",
-#     "CIBW_ARCHS",
-#     "CMAKE_ARGS",
-#     "CMAKE_GENERATOR",
-#     "DATETIME",
-#     "DEBUG_CI_FAST_BUILD",
-#     "HOST_CCACHE_DIR",
-#     "LLVM_PROJECT_COMMIT",
-#     "MATRIX_OS",
-#     "MLIR_LIT_PYTHONPATH",
-#     "PARALLEL_LEVEL",
-#     "PIP_FIND_LINKS",
-#     "PIP_NO_BUILD_ISOLATION",
-#     "RUN_TESTS",
-#     "USE_CMAKE_NAMESPACES",
-# ]
-# repair-wheel-command = [
-#     "auditwheel repair -w {dest_dir} {wheel} --exclude libcuda.so.1 --exclude libvulkan.so.1 --exclude libomp.so --exclude libompd.so"
-# ]
+environment-pass = ["HOST_CCACHE_DIR"]
 
 [tool.cibuildwheel.macos]
 build = "cp310-* cp311-* cp312-*"
 environment = { PATH = "/usr/local/opt/ccache/libexec:$PATH" }
 before-build = [
-    "pip install -r requirements.txt",
+    "pip install -r {project}/Finch-mlir/requirements/requirements.txt",
 ]
 repair-wheel-command = [
     "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel} --ignore-missing-dependencies"
@@ -66,5 +44,5 @@ repair-wheel-command = [
 build = "cp310-* cp311-* cp312-*"
 before-build = [
     "pip install delvewheel",
-    "pip install -r requirements.txt",
+    "pip install -r {project}/Finch-mlir/requirements/requirements.txt",
 ]
