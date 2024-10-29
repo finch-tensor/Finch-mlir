@@ -1,12 +1,6 @@
 name: Wheel
 
 on:
-  pull_request:
-    branches:
-      - main  # NOTE: to remove
-  push:
-    branches:
-      - main  # NOTE: to remove
   schedule:
     # At 09:00 on Monday. (see https://crontab.guru)
     - cron: '0 9 * * 1'
