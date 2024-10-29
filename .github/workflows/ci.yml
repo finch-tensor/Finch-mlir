@@ -37,9 +37,6 @@ jobs:
             arch: 'aarch64'
 
     runs-on: ${{ matrix.os }}
-    env:
-      LLVM_SOURCE_DIR: ${{ github.workspace }}/llvm-project
-      FINCH_MLIR_SOURCE_DIR: ${{ github.workspace }}/Finch-mlir
     steps:
       - name: Checkout Finch-mlir
         uses: actions/checkout@v4
@@ -100,15 +97,6 @@ jobs:
           mv ./Finch-mlir/pyproject.toml .
           cibuildwheel --output-dir ./wheelhouse
           ccache -s
-
-      # - name: Download cache from container ubuntu
-      #   if: (matrix.os == 'ubuntu-24.04' && matrix.arch == 'x86_64') && (success() || failure())
-      #   run: |
-      #     ccache -s
-      #     # rm -rf $HOST_CCACHE_DIR
-      #     # mv ./wheelhouse/.ccache $HOST_CCACHE_DIR
-      #     ls -la $HOST_CCACHE_DIR
-      #     ccache -s
 
       - name: Reset datetime ccache
         # find: The environment is too large for exec().
