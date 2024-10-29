@@ -95,6 +95,23 @@ class CMakeBuild(build_ext):
         shutil.copytree(python_package_dir, install_dir / "mlir_finch")
         shutil.rmtree(install_dir / "python_packages")
 
+        subprocess.run(
+            [
+                "find",
+                ".",
+                "-exec",
+                "touch",
+                "-a",
+                "-m",
+                "-t",
+                "197001010000",
+                "{}",
+                ";",
+            ],
+            cwd=install_dir,
+            check=False,
+        )
+
 
 def create_dir(name: str) -> Path:
     path = Path.cwd() / "build" / name

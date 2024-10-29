@@ -110,6 +110,13 @@ jobs:
       #     ls -la $HOST_CCACHE_DIR
       #     ccache -s
 
+      - name: Reset datetime ccache
+        # find: The environment is too large for exec().
+        if: ${{ !contains(matrix.os, 'windows') }}
+        run: |
+          ccache --print-stats
+          find $HOST_CCACHE_DIR -exec touch -a -m -t 197001010000 {} \;
+
       - name: Upload wheel
         uses: actions/upload-artifact@v4
         with:
