@@ -25,28 +25,55 @@ declare_mlir_python_extension(FinchPythonSources.Extension
   ADD_TO_PARENT FinchPythonSources
   SOURCES
     FinchExtension.cpp
+  PRIVATE_LINK_LIBS
+    LLVMSupport
   EMBED_CAPI_LINK_LIBS
     FinchCAPI
+    # MLIRCAPIConversion
+    # MLIRCAPITransforms
+    # MLIRCAPIRegisterEverything
 )
+
+# EMBED_CAPI_LINK_LIBS
+#   MLIRCAPIDebug
+#   MLIRCAPIIR
+#   MLIRCAPIInterfaces
+# declare_mlir_python_extension(FinchPythonSources.RegisterWhatWeNeed
+#   MODULE_NAME _finchRegisterWhatWeNeed
+#   ADD_TO_PARENT FinchPythonSources
+#   SOURCES
+#     RegisterEverything.cpp
+#   PRIVATE_LINK_LIBS
+#     LLVMSupport
+#   EMBED_CAPI_LINK_LIBS
+#     MLIRCAPIConversion
+#     MLIRCAPITransforms
+#     MLIRCAPIRegisterEverything
+# )
 
 ################################################################################
 # Common CAPI
 ################################################################################
 
-add_mlir_python_common_capi_library(FinchPythonCAPI
+add_mlir_python_common_capi_library(FPCAPI
   INSTALL_COMPONENT FinchPythonModules
-  INSTALL_DESTINATION python_packages/finch/mlir_finch/_mlir_libs
-  OUTPUT_DIRECTORY "${MLIR_BINARY_DIR}/python_packages/finch/mlir_finch/_mlir_libs"
-  RELATIVE_INSTALL_ROOT "../../../.."
+  INSTALL_DESTINATION mlir_finch/_ms
+  OUTPUT_DIRECTORY "${MLIR_BINARY_DIR}/mlir_finch/_ms"
+  RELATIVE_INSTALL_ROOT "../.."
   DECLARED_SOURCES
     FinchPythonSources
     # TODO: Remove this in favor of showing fine grained registration once
     # available.
     MLIRPythonExtension.ExecutionEngine
-    MLIRPythonExtension.RegisterEverything
-    MLIRPythonSources.ExecutionEngine
-    MLIRPythonSources.Dialects
-    MLIRPythonSources.Core
+    #MLIRPythonExtension.RegisterEverything
+    #MLIRPythonSources.ExecutionEngine
+    #MLIRPythonSources.Dialects
+    MLIRPythonSources #.Core
+    #LLVMSupport
+  #EMBED_CAPI_LINK_LIBS
+    #MLIRCAPIConversion
+    #MLIRCAPITransforms
+    #MLIRCAPIRegisterEverything
 )
 
 ################################################################################
@@ -54,8 +81,8 @@ add_mlir_python_common_capi_library(FinchPythonCAPI
 ################################################################################
 
 add_mlir_python_modules(FinchPythonModules
-  ROOT_PREFIX "${MLIR_BINARY_DIR}/python_packages/finch/mlir_finch"
-  INSTALL_PREFIX "python_packages/finch/mlir_finch"
+  ROOT_PREFIX "${MLIR_BINARY_DIR}/mlir_finch"
+  INSTALL_PREFIX "mlir_finch"
   DECLARED_SOURCES
     FinchPythonSources
     # TODO: Remove this in favor of showing fine grained registration once
@@ -66,5 +93,6 @@ add_mlir_python_modules(FinchPythonModules
     MLIRPythonExtension.RegisterEverything
     MLIRPythonSources
   COMMON_CAPI_LINK_LIBS
-    FinchPythonCAPI
+    FPCAPI
+    MLIRCAPIRegisterEverything
   )

@@ -1,6 +1,12 @@
 name: Wheel
 
 on:
+  pull_request:
+    branches:
+      - main  # NOTE: to remove
+  push:
+    branches:
+      - main  # NOTE: to remove
   schedule:
     # At 09:00 on Monday. (see https://crontab.guru)
     - cron: '0 9 * * 1'
@@ -17,7 +23,7 @@ jobs:
   build-wheel:
     strategy:
       matrix:
-        os: ['ubuntu-24.04', 'macos-12', 'macos-14']  # TODO: 'windows-2022'
+        os: ['windows-2022']  # TODO: , 'ubuntu-24.04', 'macos-12', 'macos-14'
         arch: ['x86_64', 'aarch64']
         python: ['3.10']
         exclude:
@@ -43,6 +49,19 @@ jobs:
           repository: llvm/llvm-project
           ref: '4091bc61e315f187829dca877dd908a07ba9cb91'  # Latest commit as of 2024-10-17
           path: 'llvm-project'
+
+      - uses: ilammy/msvc-dev-cmd@v1.4.1
+        if: ${{ matrix.os == 'windows-2022' }}
+
+      - name: Set up Visual Studio shell
+        if: ${{ matrix.os == 'windows-2022' }}
+        uses: egor-tensin/vs-shell@v2
+        with:
+          arch: x64
+
+      - name: MS Build
+        if: ${{ matrix.os == 'windows-2022' }}
+        uses: microsoft/setup-msbuild@v1.1
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1
@@ -85,7 +104,18 @@ jobs:
         run: |
           echo "MACOSX_DEPLOYMENT_TARGET=11.0" | tee -a $GITHUB_ENV
 
+      # - name: set env variables - windows
+      #   if: contains(matrix.os, 'windows')
+      #   shell: pwsh
+      #   run: |
+      #     echo "SPARSE_BACKEND=MLIR" >> $env:GITHUB_ENV
+
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+
       - name: cibuildwheel run
+        env:
+          SPARSE_BACKEND: MLIR
         run: |
           mv ./Finch-mlir/setup.py .
           mv ./Finch-mlir/pyproject.toml .

@@ -3,4 +3,4 @@
 #  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 from ._finch_ops_gen import *
-from .._mlir_libs._finchDialects.finch import *
+from .._ms._finchDialects.finch import *

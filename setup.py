@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import sys
 import subprocess
@@ -23,6 +24,14 @@ class CMakeExtension(Extension):
 
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
+
+        p1 = os.fspath(Path("/tmp/st").absolute())
+        shutil.move(ext.llvm_source_dir, p1)
+        ext.llvm_source_dir = os.fspath(Path("/tmp/st/llvm").absolute())
+        p2 = os.fspath(Path("/tmp/sf").absolute())
+        shutil.move(ext.finch_source_dir, p2)
+        ext.finch_source_dir = p2
+
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
         install_dir = extdir
@@ -33,6 +42,14 @@ class CMakeBuild(build_ext):
         extra_flags = []
         if sys.platform.startswith("darwin"):
             extra_flags.append("-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0")
+        elif platform.system() == "Windows":
+            extra_flags += [
+                "-DCMAKE_C_COMPILER=cl",
+                "-DCMAKE_CXX_COMPILER=cl",
+                "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded",
+                "-DCMAKE_C_FLAGS=/MT",
+                "-DCMAKE_CXX_FLAGS=/MT",
+            ]
 
         # BUILD LLVM
         llvm_cmake_args = [
@@ -64,12 +81,33 @@ class CMakeBuild(build_ext):
             check=True,
         )
 
+        llvm_lit = "llvm-lit.py" if platform.system() == "Windows" else "llvm-lit"
+
+        subprocess.run(
+            ["dir", llvm_build_dir / 'bin'],
+            cwd=finch_build_dir,
+            check=True,
+        )
+
+        subprocess.run(
+            ["dir", str(llvm_build_dir)],
+            cwd=finch_build_dir,
+            check=True,
+        )
+
+        # if platform.system() == "Windows":
+        #     # fatal error LNK1170: line in command file contains 131071 or more characters
+        #     if Path("/tmp/m").exists():
+        #         shutil.rmtree("/tmp/m")
+        #     shutil.move(llvm_install_dir, "/tmp/m")
+        #     llvm_install_dir = Path("/tmp/m").absolute()
+
         # BUILD FINCH DIALECT
         dialect_cmake_args = [
             "-G Ninja",
             f"-B{finch_build_dir}",
-            f"-DMLIR_DIR={llvm_install_dir}/lib/cmake/mlir",
-            f"-DLLVM_EXTERNAL_LIT={llvm_build_dir}/bin/llvm-lit",
+            f"-DMLIR_DIR={llvm_install_dir / 'lib' / 'cmake' / 'mlir'}",
+            f"-DLLVM_EXTERNAL_LIT={llvm_build_dir / 'bin' / llvm_lit}",
             "-DCMAKE_PLATFORM_NO_VERSIONED_SONAME=ON",
             f"-DCMAKE_MAKE_PROGRAM:FILEPATH={ninja_executable_path}",
             "-DLLVM_ENABLE_ZLIB=OFF",
@@ -91,9 +129,9 @@ class CMakeBuild(build_ext):
         )
 
         # Move Python package out of nested directories.
-        python_package_dir = install_dir / "python_packages" / "finch" / "mlir_finch"
-        shutil.copytree(python_package_dir, install_dir / "mlir_finch")
-        shutil.rmtree(install_dir / "python_packages")
+        # python_package_dir = install_dir / "python_packages" / "finch" / "mlir_finch"
+        # shutil.copytree(python_package_dir, install_dir / "mlir_finch")
+        # shutil.rmtree(install_dir / "python_packages")
 
         subprocess.run(
             [
@@ -114,15 +152,15 @@ class CMakeBuild(build_ext):
 
 
 def create_dir(name: str) -> Path:
-    path = Path.cwd() / "build" / name
+    path = Path("/tmp").absolute() / name
     if not path.exists():
         path.mkdir(parents=True)
     return path
 
 
-llvm_build_dir = create_dir("llvm-build")
-llvm_install_dir = create_dir("llvm-install")
-finch_build_dir = create_dir("finch-build")
+llvm_build_dir = create_dir("ub")
+llvm_install_dir = create_dir("ui")
+finch_build_dir = create_dir("fb")
 
 
 setup(
@@ -134,7 +172,7 @@ setup(
     long_description_content_type="text/markdown",
     ext_modules=[CMakeExtension(
         "mlir_finch_ext",
-        llvm_source_dir=f"./llvm-project/llvm",
+        llvm_source_dir=f"./llvm-project", # /llvm
         finch_source_dir="./Finch-mlir",
     )],
     cmdclass={"build_ext": CMakeBuild},
