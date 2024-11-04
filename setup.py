@@ -25,12 +25,12 @@ class CMakeExtension(Extension):
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
 
-        p1 = os.fspath(Path("/tmp/st").absolute())
-        shutil.move(ext.llvm_source_dir, p1)
-        ext.llvm_source_dir = os.fspath(Path("/tmp/st/llvm").absolute())
-        p2 = os.fspath(Path("/tmp/sf").absolute())
-        shutil.move(ext.finch_source_dir, p2)
-        ext.finch_source_dir = p2
+        # p1 = os.fspath(Path("/tmp/st").absolute())
+        # shutil.move(ext.llvm_source_dir, p1)
+        # ext.llvm_source_dir = os.fspath(Path("/tmp/st/llvm").absolute())
+        # p2 = os.fspath(Path("/tmp/sf").absolute())
+        # shutil.move(ext.finch_source_dir, p2)
+        # ext.finch_source_dir = p2
 
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
@@ -83,17 +83,17 @@ class CMakeBuild(build_ext):
 
         llvm_lit = "llvm-lit.py" if platform.system() == "Windows" else "llvm-lit"
 
-        subprocess.run(
-            ["dir", llvm_build_dir / 'bin'],
-            cwd=finch_build_dir,
-            check=True,
-        )
+        # subprocess.run(
+        #     ["dir", llvm_build_dir / 'bin'],
+        #     cwd=finch_build_dir,
+        #     check=True,
+        # )
 
-        subprocess.run(
-            ["dir", str(llvm_build_dir)],
-            cwd=finch_build_dir,
-            check=True,
-        )
+        # subprocess.run(
+        #     ["dir", str(llvm_build_dir)],
+        #     cwd=finch_build_dir,
+        #     check=True,
+        # )
 
         # if platform.system() == "Windows":
         #     # fatal error LNK1170: line in command file contains 131071 or more characters
@@ -129,9 +129,9 @@ class CMakeBuild(build_ext):
         )
 
         # Move Python package out of nested directories.
-        # python_package_dir = install_dir / "python_packages" / "finch" / "mlir_finch"
-        # shutil.copytree(python_package_dir, install_dir / "mlir_finch")
-        # shutil.rmtree(install_dir / "python_packages")
+        python_package_dir = install_dir / "python_packages" / "finch" / "mlir_finch"
+        shutil.copytree(python_package_dir, install_dir / "mlir_finch")
+        shutil.rmtree(install_dir / "python_packages")
 
         subprocess.run(
             [
@@ -152,15 +152,15 @@ class CMakeBuild(build_ext):
 
 
 def create_dir(name: str) -> Path:
-    path = Path("/tmp").absolute() / name
+    path = Path.cwd() / "build" / name  # Path("/tmp").absolute()
     if not path.exists():
         path.mkdir(parents=True)
     return path
 
 
-llvm_build_dir = create_dir("ub")
-llvm_install_dir = create_dir("ui")
-finch_build_dir = create_dir("fb")
+llvm_build_dir = create_dir("llvm-build")
+llvm_install_dir = create_dir("llvm-install")
+finch_build_dir = create_dir("finch-build")
 
 
 setup(
@@ -172,7 +172,7 @@ setup(
     long_description_content_type="text/markdown",
     ext_modules=[CMakeExtension(
         "mlir_finch_ext",
-        llvm_source_dir=f"./llvm-project", # /llvm
+        llvm_source_dir=f"./llvm-project/llvm", # /llvm
         finch_source_dir="./Finch-mlir",
     )],
     cmdclass={"build_ext": CMakeBuild},

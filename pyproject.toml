@@ -14,7 +14,7 @@ build = "cp310-* cp311-* cp312-* cp313-*"
 build-verbosity = 1
 test-requires = ["pytest", "pytest-cov", "PyYAML", "scipy"]
 before-test = "pip install --no-deps sparse@git+https://github.com/pydata/sparse@updated-llvm-nightly-test"
-test-command = "pytest --pyargs sparse.mlir_backend"
+test-command = "pytest --pyargs sparse/mlir_backend"
 
 [tool.cibuildwheel.linux]
 skip = ["*-manylinux_i686", "*-musllinux*"]
@@ -40,4 +40,3 @@ before-build = [
     "pip install delvewheel",
     "pip install -r {project}\\Finch-mlir\\requirements\\requirements.txt",
 ]
-test-command = "python -c \"import mlir_finch\""
