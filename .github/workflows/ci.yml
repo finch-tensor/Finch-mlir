@@ -110,9 +110,6 @@ jobs:
       #   run: |
       #     echo "SPARSE_BACKEND=MLIR" >> $env:GITHUB_ENV
 
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-
       - name: cibuildwheel run
         env:
           SPARSE_BACKEND: MLIR
@@ -121,6 +118,9 @@ jobs:
           mv ./Finch-mlir/pyproject.toml .
           cibuildwheel --output-dir ./wheelhouse
           ccache -s
+
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
 
       - name: Reset datetime ccache
         # find: The environment is too large for exec().

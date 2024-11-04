@@ -24,14 +24,6 @@ class CMakeExtension(Extension):
 
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
-
-        # p1 = os.fspath(Path("/tmp/st").absolute())
-        # shutil.move(ext.llvm_source_dir, p1)
-        # ext.llvm_source_dir = os.fspath(Path("/tmp/st/llvm").absolute())
-        # p2 = os.fspath(Path("/tmp/sf").absolute())
-        # shutil.move(ext.finch_source_dir, p2)
-        # ext.finch_source_dir = p2
-
         ext_fullpath = Path.cwd() / self.get_ext_fullpath(ext.name)
         extdir = ext_fullpath.parent.resolve()
         install_dir = extdir
@@ -83,25 +75,6 @@ class CMakeBuild(build_ext):
 
         llvm_lit = "llvm-lit.py" if platform.system() == "Windows" else "llvm-lit"
 
-        # subprocess.run(
-        #     ["dir", llvm_build_dir / 'bin'],
-        #     cwd=finch_build_dir,
-        #     check=True,
-        # )
-
-        # subprocess.run(
-        #     ["dir", str(llvm_build_dir)],
-        #     cwd=finch_build_dir,
-        #     check=True,
-        # )
-
-        # if platform.system() == "Windows":
-        #     # fatal error LNK1170: line in command file contains 131071 or more characters
-        #     if Path("/tmp/m").exists():
-        #         shutil.rmtree("/tmp/m")
-        #     shutil.move(llvm_install_dir, "/tmp/m")
-        #     llvm_install_dir = Path("/tmp/m").absolute()
-
         # BUILD FINCH DIALECT
         dialect_cmake_args = [
             "-G Ninja",
@@ -152,7 +125,7 @@ class CMakeBuild(build_ext):
 
 
 def create_dir(name: str) -> Path:
-    path = Path.cwd() / "build" / name  # Path("/tmp").absolute()
+    path = Path.cwd() / "build" / name
     if not path.exists():
         path.mkdir(parents=True)
     return path
@@ -172,7 +145,7 @@ setup(
     long_description_content_type="text/markdown",
     ext_modules=[CMakeExtension(
         "mlir_finch_ext",
-        llvm_source_dir=f"./llvm-project/llvm", # /llvm
+        llvm_source_dir=f"./llvm-project/llvm",
         finch_source_dir="./Finch-mlir",
     )],
     cmdclass={"build_ext": CMakeBuild},
