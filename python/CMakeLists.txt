@@ -44,11 +44,19 @@ add_mlir_python_common_capi_library(FinchPythonCAPI
     FinchPythonSources
     # TODO: Remove this in favor of showing fine grained registration once
     # available.
-    MLIRPythonExtension.ExecutionEngine
-    #MLIRPythonExtension.RegisterEverything
+    #MLIRPythonExtension.ExecutionEngine
+    MLIRPythonSources
+    MLIRPythonExtension.RegisterEverything
+    # MLIRFuncDialect
+    # MLIRAffineDialect
+    # MLIRArithDialect
+    # MLIRTensorDialect
+    # MLIRTransforms
+    # MLIRPass
+    # MLIRCAPIIR
     #MLIRPythonSources.ExecutionEngine
     #MLIRPythonSources.Dialects
-    MLIRPythonSources #.Core
+    #MLIRPythonSources #.Core
     #LLVMSupport
   #EMBED_CAPI_LINK_LIBS
     #MLIRCAPIConversion
@@ -67,12 +75,12 @@ add_mlir_python_modules(FinchPythonModules
     FinchPythonSources
     # TODO: Remove this in favor of showing fine grained registration once
     # available.
-    MLIRPythonExtension.Core
+    MLIRPythonSources
+    MLIRPythonExtension.RegisterEverything
+    #MLIRPythonExtension.Core
     MLIRPythonExtension.ExecutionEngine
     MLIRPythonSources.ExecutionEngine
-    MLIRPythonExtension.RegisterEverything
-    MLIRPythonSources
   COMMON_CAPI_LINK_LIBS
     FinchPythonCAPI
-    MLIRCAPIRegisterEverything
+    #MLIRCAPIRegisterEverything
   )

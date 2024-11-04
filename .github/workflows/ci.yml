@@ -23,7 +23,7 @@ jobs:
   build-wheel:
     strategy:
       matrix:
-        os: ['windows-2022']  # TODO: , 'ubuntu-24.04', 'macos-12', 'macos-14'
+        os: ['windows-2022', 'macos-12']  # TODO: , 'ubuntu-24.04', 'macos-12', 'macos-14'
         arch: ['x86_64', 'aarch64']
         python: ['3.10']
         exclude:
