@@ -75,23 +75,6 @@ class CMakeBuild(build_ext):
 
         llvm_lit = "llvm-lit.py" if platform.system() == "Windows" else "llvm-lit"
 
-        extra_flags_dialect = []
-        if platform.system() == "Windows":
-            extra_flags_dialect += [
-                "-DCMAKE_C_COMPILER=cl",
-                "-DCMAKE_CXX_COMPILER=cl",
-                "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded",
-                "-DCMAKE_C_FLAGS=/MT",
-                "-DCMAKE_CXX_FLAGS=/MT",
-                "-DCMAKE_C_USE_RESPONSE_FILE_FOR_INCLUDES=ON",
-                "-DCMAKE_CXX_USE_RESPONSE_FILE_FOR_INCLUDES=ON",
-                "-DCMAKE_C_USE_RESPONSE_FILE_FOR_LIBRARIES=ON",
-                "-DCMAKE_CXX_USE_RESPONSE_FILE_FOR_LIBRARIES=ON",
-                "-DCMAKE_C_USE_RESPONSE_FILE_FOR_OBJECTS=ON",
-                "-DCMAKE_CXX_USE_RESPONSE_FILE_FOR_OBJECTS=ON",
-                "-DCMAKE_NINJA_FORCE_RESPONSE_FILE=ON",
-            ]
-
         # BUILD FINCH DIALECT
         dialect_cmake_args = [
             "-G Ninja",
@@ -103,7 +86,7 @@ class CMakeBuild(build_ext):
             "-DLLVM_ENABLE_ZLIB=OFF",
             "-DLLVM_ENABLE_ZSTD=OFF",
             f"-DPython3_EXECUTABLE={PYTHON_EXECUTABLE}",
-            *extra_flags_dialect,
+            *extra_flags,
         ]
 
         subprocess.run(
@@ -155,7 +138,7 @@ finch_build_dir = create_dir("finch-build")
 
 setup(
     name="finch-mlir",
-    version="0.0.1",
+    version="0.0.2",
     include_package_data=True,
     description="Finch MLIR distribution as wheel.",
     long_description="Finch MLIR distribution as wheel.",

@@ -50,7 +50,8 @@ jobs:
           ref: '4091bc61e315f187829dca877dd908a07ba9cb91'  # Latest commit as of 2024-10-17
           path: 'llvm-project'
 
-      - uses: ilammy/msvc-dev-cmd@v1.4.1
+      - name: Setup Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1.4.1
         if: ${{ matrix.os == 'windows-2022' }}
 
       - name: Set up Visual Studio shell
@@ -59,7 +60,7 @@ jobs:
         with:
           arch: x64
 
-      - name: MS Build
+      - name: Setup MS Build
         if: ${{ matrix.os == 'windows-2022' }}
         uses: microsoft/setup-msbuild@v1.1
 
@@ -112,9 +113,6 @@ jobs:
           mv ./Finch-mlir/pyproject.toml .
           cibuildwheel --output-dir ./wheelhouse
           ccache -s
-
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
 
       - name: Reset datetime ccache
         # find: The environment is too large for exec().
