@@ -11,10 +11,8 @@ add_llvm_library(FinchPlugin
         LINK_LIBS
         MLIRFinch
         )
-if(UNIX)
-        target_include_directories(
-                FinchPlugin
-                PRIVATE
-                ${FINCH_BINARY_DIR}/include
-        )
-endif()
+target_include_directories(
+        FinchPlugin
+        PRIVATE
+        "${FINCH_BINARY_DIR}/include"
+)

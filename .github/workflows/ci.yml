@@ -23,7 +23,7 @@ jobs:
   build-wheel:
     strategy:
       matrix:
-        os: ['windows-2022', 'macos-12']  # TODO: , 'ubuntu-24.04', 'macos-12', 'macos-14'
+        os: ['ubuntu-24.04', 'macos-12', 'macos-14', 'windows-2022']
         arch: ['x86_64', 'aarch64']
         python: ['3.10']
         exclude:
@@ -103,12 +103,6 @@ jobs:
         shell: bash
         run: |
           echo "MACOSX_DEPLOYMENT_TARGET=11.0" | tee -a $GITHUB_ENV
-
-      # - name: set env variables - windows
-      #   if: contains(matrix.os, 'windows')
-      #   shell: pwsh
-      #   run: |
-      #     echo "SPARSE_BACKEND=MLIR" >> $env:GITHUB_ENV
 
       - name: cibuildwheel run
         env:

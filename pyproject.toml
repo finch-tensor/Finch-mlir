@@ -10,7 +10,7 @@ requires = [
 ]
 
 [tool.cibuildwheel]
-build = "cp310-*"
+build = "cp310-* cp311-* cp312-* cp313-*"
 build-verbosity = 1
 test-requires = ["pytest", "pytest-cov", "PyYAML", "scipy"]
 before-test = "pip install --no-deps sparse@git+https://github.com/pydata/sparse@updated-llvm-nightly-test"
@@ -35,7 +35,7 @@ repair-wheel-command = [
 ]
 
 [tool.cibuildwheel.windows]
-build = "cp310-win_amd64"
+build = "cp310-win_amd64 cp311-win_amd64 cp312-win_amd64 cp313-win_amd64"
 before-build = [
     "pip install delvewheel",
     "pip install -r {project}\\Finch-mlir\\requirements\\requirements.txt",
