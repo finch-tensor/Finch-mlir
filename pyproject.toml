@@ -24,6 +24,8 @@ before-build = [
     "{project}/Finch-mlir/scripts/docker_prepare_ccache.sh"
 ]
 environment-pass = ["HOST_CCACHE_DIR", "SPARSE_BACKEND"]
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-pypy_x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.macos]
 environment = { PATH = "/usr/local/opt/ccache/libexec:$PATH" }
