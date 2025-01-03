@@ -45,4 +45,15 @@ def AnyNumberOrIndex : AnyTypeOf<[AnyInteger, AnyFloat, Index]>;
 def Looplet : AnyTypeOf<[Finch_LoopletType]>;
 def LoopletOrNumber : AnyTypeOf<[Finch_LoopletType, AnyNumber]>;
 
+
+// HIGH-LEVEL LAZY API
+
+
+def LazyFinch_LogicNodeType : TypeDef<Finch_Dialect, "LogicNode", []> {
+    let summary = "Finch LogicNode type";
+    let description = "LogicNode type in Finch dialect";
+    let mnemonic = "logicnode";
+}
+
+
 #endif // FINCH_TYPES

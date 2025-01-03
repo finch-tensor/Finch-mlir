@@ -753,7 +753,51 @@ public:
 };
 
 
+class LazyFinchIsolateReformatsRewriter : public OpRewritePattern<finch::ReformatOp> {
+public:
+  using OpRewritePattern<finch::ReformatOp>::OpRewritePattern;
 
+  LogicalResult matchAndRewrite(finch::ReformatOp op, PatternRewriter &rewriter) const {
+    Value tns = op.getOperand(0);
+    Value arg = op.getOperand(1);
+
+    Alias a = "#A##123"; // generate unique symbol somehow
+    finch::AliasOp alias = finch::AliasOp(a);
+
+    // rather a pseudocode
+    rewriter.replaceOpWithNewOp<memref::SubqueryOp>(op, alias, finch::ReformatOp(tns, arg));
+
+    return success();
+  }
+}
+
+// mirrors optimize function from optimize.jl
+class LazyFinchLogicPass
+    : public impl::LazyFinchLogicPassBase<LazyFinchLogicPass> {
+public:
+  using impl::LazyFinchLogicPassBase<
+      LazyFinchLogicPass>::LazyFinchLogicPassBase;
+  void runOnOperation() final {
+    RewritePatternSet patterns(&getContext());
+    //patterns.add<LazyFinchLiftSubqueriesRewriter>(&getContext());
+    patterns.add<LazyFinchIsolateReformatsRewriter>(&getContext());
+    //patterns.add<LazyFinchIsolateAggregatesRewriter>(&getContext());
+    //patterns.add<LazyFinchIsolateTablesRewriter>(&getContext());
+    //patterns.add<LazyFinchPrettyLabelsRewriter>(&getContext());
+    //patterns.add<LazyFinchPropagateCopyQueriesRewriter>(&getContext());
+    //patterns.add<LazyFinchPropagateTransposeQueriesRewriter>(&getContext());
+    //patterns.add<LazyFinchPropagateMapQueriesRewriter>(&getContext());
+    //patterns.add<LazyFinchPropagateFieldsRewriter>(&getContext());
+    //patterns.add<LazyFinchPropagateTransposeQueriesRewriter>(&getContext());
+    //patterns.add<LazyFinchSetLoopOrderRewriter>(&getContext());
+    //patterns.add<LazyFinchPushFieldsRewriter>(&getContext());
+    //patterns.add<LazyFinchConcordizeRewriter>(&getContext());
+    //...
+    FrozenRewritePatternSet patternSet(std::move(patterns));
+    if (failed(applyPatternsAndFoldGreedily(getOperation(), patternSet)))
+      signalPassFailure();
+  }
+};
 
 
 } // namespace
