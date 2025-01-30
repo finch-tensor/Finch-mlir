@@ -6,8 +6,11 @@ set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
 
 # https://github.com/iree-org/iree/blob/c96372348654eea8548509d38df5c8e8b179aef3/CMakeLists.txt#L275-L280
-find_package(Python3 COMPONENTS Interpreter Development)
-find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development NumPy)
+find_package(Python3 COMPONENTS Interpreter Development.Module NumPy REQUIRED)
+# nanobind uses Python_EXECUTABLE
+find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
+
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   find_package(MLIR REQUIRED CONFIG)

@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: llvm/llvm-project
-          ref: '4091bc61e315f187829dca877dd908a07ba9cb91'  # Latest commit as of 2024-10-17
+          ref: 'bb59eb8ed534da2bd03117cfde594321add4d60c'  # Latest commit as of 2025-01-22
           path: 'llvm-project'
 
       - name: Setup Developer Command Prompt

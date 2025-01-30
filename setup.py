@@ -4,6 +4,7 @@ import shutil
 import sys
 import subprocess
 from pathlib import Path
+from sysconfig import get_paths
 
 import ninja
 from setuptools import Extension, setup
@@ -29,9 +30,14 @@ class CMakeBuild(build_ext):
         install_dir = extdir
         ninja_executable_path = Path(ninja.BIN_DIR) / "ninja"
         PYTHON_EXECUTABLE = str(Path(sys.executable))
+        include_path = get_paths()["include"]
 
-
-        extra_flags = []
+        extra_flags = [
+            # pybind11 and nanobind use different names
+            f"-DPython_INCLUDE_DIR={include_path}",
+            f"-DPython3_INCLUDE_DIR={include_path}",
+            f"-DPYTHON_INCLUDE_DIR={include_path}",
+        ]
         if sys.platform.startswith("darwin"):
             extra_flags.append("-DCMAKE_OSX_DEPLOYMENT_TARGET=11.0")
         elif platform.system() == "Windows":
@@ -42,6 +48,13 @@ class CMakeBuild(build_ext):
                 "-DCMAKE_C_FLAGS=/MT",
                 "-DCMAKE_CXX_FLAGS=/MT",
             ]
+            libs_path = Path(include_path).parent / "libs"
+            library_path = libs_path / f"python3{sys.version_info.minor}.lib"
+            for python_name in ["Python", "Python3", "PYTHON"]:
+                extra_flags += [
+                    f"-D{python_name}_LIBRARY={library_path}",
+                    f"-D{python_name}_LIBRARY_DIRS={libs_path}",
+                ]
 
         # BUILD LLVM
         llvm_cmake_args = [
@@ -51,6 +64,10 @@ class CMakeBuild(build_ext):
             "-DLLVM_TARGETS_TO_BUILD=Native",
             "-DMLIR_ENABLE_BINDINGS_PYTHON=ON",
             f"-DPython3_EXECUTABLE={PYTHON_EXECUTABLE}",
+            f"-DPython_EXECUTABLE={PYTHON_EXECUTABLE}",
+            f"-DPYTHON_EXECUTABLE={PYTHON_EXECUTABLE}",
+            f"-UNB_SUFFIX",
+            f"-UNB_SUFFIX_S",
             "-DLLVM_INSTALL_UTILS=ON",
             "-DLLVM_CCACHE_BUILD=ON",
             "-DCMAKE_BUILD_TYPE=Release",
@@ -86,6 +103,10 @@ class CMakeBuild(build_ext):
             "-DLLVM_ENABLE_ZLIB=OFF",
             "-DLLVM_ENABLE_ZSTD=OFF",
             f"-DPython3_EXECUTABLE={PYTHON_EXECUTABLE}",
+            f"-DPython_EXECUTABLE={PYTHON_EXECUTABLE}",
+            f"-DPYTHON_EXECUTABLE={PYTHON_EXECUTABLE}",
+            f"-UNB_SUFFIX",
+            f"-UNB_SUFFIX_S",
             *extra_flags,
         ]
 
