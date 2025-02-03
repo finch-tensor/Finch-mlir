@@ -2,63 +2,49 @@
 
 This is an example of an out-of-tree [MLIR](https://mlir.llvm.org/) dialect along with a finch `opt`-like tool to operate on that dialect.
 
-## How to Install
+## Install
 
-0. Git clone llvm repository (at commit point bb59eb8ed534da2bd03117cfde594321add4d60c)
-```
-git clone https://github.com/llvm/llvm-project.git
-git checkout bb59eb8ed534da2bd03117cfde594321add4d60c
-cd llvm-project
+0. Do a recursive clone
+```sh
+git clone --recursive https://github.com/finch-tensor/Finch-mlir.git
 ```
 
-1. Install prerequisites for mlir python bindings
-
-```
-# Create python virtual environment
-# Make sure your 'python' is what you expect.
-which python
-python -m venv ~/.venv/mlirdev
-source ~/.venv/mlirdev/bin/activate
-
-python -m pip install --upgrade pip
-python -m pip install -r mlir/python/requirements.txt
+Or if you have already cloned this repository, run
+```sh
+git submodule init --update --recursive
 ```
 
-2. Build MLIR
+This will take some time as it perform a shallow-clone of LLVM.
 
-```
-mkdir build
-cd build
-cmake -G Ninja ../llvm \                                                                                                                                                  
-   -DLLVM_ENABLE_PROJECTS=mlir \
-   -DLLVM_BUILD_EXAMPLES=ON \
-   -DLLVM_TARGETS_TO_BUILD="Native" \
-   -DCMAKE_BUILD_TYPE=Release \
-   -DLLVM_ENABLE_ASSERTIONS=ON \
-   -DMLIR_ENABLE_BINDINGS_PYTHON=ON \
-   -DPython3_EXECUTABLE=<YOUR PYTHON PATH (e.g., /Users/jaeyeonwon/.venv/mlirdev/bin/python)>
+1. Install prerequisites to build the dialect and the Python bindings:
 
-# Build and Check mlir (I got 88% passed)
-cmake --build . --target check-mlir
+1a. Use your system package manager or `conda` to install a C/C++ compiler and CCache.
 
+1b. Install the build-time Python requirements:
+
+```sh
+# Generate the build requirements dynamically from `pyproject.toml` and install them.
+./scripts/install_build_reqs.sh
 ```
 
-3. Add PYTHONPATH
-```
-# Add below line to .bashrc or .zshrc
-export PYTHONPATH=$LLVM_BUILD_DIR/tools/mlir/python_packages/mlir_core:$PYTHONPATH
+2. Build the wheel or install the package:
+
+```sh
+python -m build --no-isolation
 ```
 
+OR
 
-4. Build Finch-mlir
-
+```sh
+pip install --no-build-isolation .
 ```
-https://github.com/finch-tensor/Finch-mlir.git
-cd Finch-mlir
-mkdir build && cd build
-LLVM_BUILD_DIR=<YOUR LLVM BUILD PATH (e.g., /Users/jaeyeonwon/llvm-project/build>
-cmake -G Ninja .. -DMLIR_DIR=$LLVM_BUILD_DIR/lib/cmake/mlir -DLLVM_EXTERNAL_LIT=$LLVM_BUILD_DIR/bin/llvm-lit
+In theory, the `--no-[build-]isolation` flag is unnecessary, but it caches the LLVM build which can greatly speed-up the buid process on repeated runs.
 
-# Build and Check finch-mlir
-cmake --build . --target check-finch
+## Run Tests
+One can run the tests once the wheel is built and/or the package is installed with
+
+```sh
+cmake --build build --target check-finch
 ```
+
+Assuming the CMake configure step doesn't need to run.

@@ -66,3 +66,7 @@ add_mlir_python_modules(FinchPythonModules
   COMMON_CAPI_LINK_LIBS
     FinchPythonCAPI
   )
+
+if (DEFINED SKBUILD)
+  install(DIRECTORY "${MLIR_BINARY_DIR}/python_packages/finch/mlir_finch" DESTINATION "${SKBUILD_PLATLIB_DIR}" USE_SOURCE_PERMISSIONS)
+endif()
