@@ -19,7 +19,6 @@ jobs:
       matrix:
         os: ['ubuntu-24.04', 'macos-13', 'macos-14', 'windows-2022']
         arch: ['x86_64', 'aarch64']
-        python: ['3.10']
         exclude:
           - os: 'ubuntu-24.04'  # TODO: needs qemu setup
             arch: 'aarch64'
@@ -35,14 +34,7 @@ jobs:
       - name: Checkout Finch-mlir
         uses: actions/checkout@v4
         with:
-          path: 'Finch-mlir'
-
-      - name: Checkout LLVM
-        uses: actions/checkout@v4
-        with:
-          repository: llvm/llvm-project
-          ref: 'bb59eb8ed534da2bd03117cfde594321add4d60c'  # Latest commit as of 2025-01-22
-          path: 'llvm-project'
+          submodules: 'recursive'
 
       - name: Setup Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@v1.4.1
@@ -61,7 +53,7 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1
         with:
-          key: ${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.python }}
+          key: ${{ matrix.os }}-${{ matrix.arch }}
           max-size: "1G"
           verbose: 2
           variant: ccache
@@ -92,7 +84,7 @@ jobs:
       - name: Set env variables
         run: |
           echo "HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"" >> $GITHUB_ENV
-
+      
       - name: set env variables - macos
         if: contains(matrix.os, 'macos')
         shell: bash
@@ -101,10 +93,8 @@ jobs:
 
       - name: cibuildwheel run
         env:
-          SPARSE_BACKEND: MLIR
+          SPARSE_BACKEND: "MLIR"
         run: |
-          mv ./Finch-mlir/setup.py .
-          mv ./Finch-mlir/pyproject.toml .
           cibuildwheel --output-dir ./wheelhouse
           ccache -s
 
@@ -119,7 +109,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*.whl
-          name: artifact_finch_mlir-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.python }}
+          name: artifact_finch_mlir-${{ matrix.os }}-${{ matrix.arch }}
 
   release-wheel:
     runs-on: 'ubuntu-latest'

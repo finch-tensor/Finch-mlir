@@ -1,43 +1,89 @@
 [build-system]
 requires = [
-    "setuptools>=42",
     "wheel",
     "ninja",
-    "cmake>=3.12",
+    "cmake>=3.20",
     "pybind11>=2.10.4",
-    "numpy",
+    "numpy>=2",
     "PyYAML",
     "nanobind",
+    "delvewheel; platform_system=='Windows'",
+    "setuptools-scm>=8",
+    "scikit-build-core>=0.10,<0.11"
 ]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "finch-mlir"
+dynamic = ["version"]
+description = "Finch MLIR distribution as wheel."
+readme = "README.md"
+dependencies = [
+    "PyYAML>=6",
+    "numpy>=1.17",
+]
+
+[tool.setuptools_scm]
+
+[tool.scikit-build]
+cmake.source-dir = "llvm-project/llvm"
+ninja.make-fallback = false
+build-dir = "build"
+cmake.args = ["-G Ninja", "-UNB_SUFFIX", "-UNB_SUFFIX_S"]
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+# Exclude everything from the wheel except the `mlir_finch` directory.
+wheel.exclude = ["**/*", "!mlir_finch/**/*"]
+wheel.packages = []
+
+[tool.scikit-build.cmake.define]
+LLVM_EXTERNAL_PROJECTS = "finch"
+LLVM_EXTERNAL_FINCH_SOURCE_DIR= "."
+MLIR_ENABLE_BINDINGS_PYTHON = true
+LLVM_ENABLE_PROJECTS = "mlir"
+LLVM_TARGETS_TO_BUILD = "Native"
+LLVM_CCACHE_BUILD = true
+LLVM_ENABLE_ZLIB = false
+LLVM_ENABLE_ZSTD = false
+CMAKE_PLATFORM_NO_VERSIONED_SONAME = true
+
+[[tool.scikit-build.overrides]]
+if.platform-system = "^darwin"
+inherit.cmake.define = "append"
+cmake.define.CMAKE_OSX_DEPLOYMENT_TARGET = "11.0"
+
+[[tool.scikit-build.overrides]]
+if.platform-system = "^win32"
+inherit.cmake.define = "append"
+cmake.define.CMAKE_C_COMPILER = "clang-cl"
+cmake.define.CMAKE_CXX_COMPILER = "clang-cl"
+cmake.define.CMAKE_MSVC_RUNTIME_LIBRARY = "MultiThreaded"
+cmake.define.CMAKE_C_FLAGS = "/MT"
+cmake.define.CMAKE_CXX_FLAGS = "/MT"
 
 [tool.cibuildwheel]
 build = "cp310-* cp311-* cp312-* cp313-*"
+build-frontend = { name = "build", args = ["--no-isolation"] }
 build-verbosity = 1
 test-requires = ["pytest", "pytest-cov", "PyYAML", "scipy"]
+before-build = [
+    "cd \"{project}\"",
+    "bash ./scripts/install_build_reqs.sh",
+    # Clean up compiled shared objects from other Python versions.
+    "find . -name *.cpython-*.so -type f -delete"
+]
 before-test = "pip install --no-deps sparse@git+https://github.com/pydata/sparse.git"
 test-command = "python -m pytest --pyargs sparse.mlir_backend"
 
 [tool.cibuildwheel.linux]
 skip = ["*-manylinux_i686", "*-musllinux*"]
 environment = { PATH = "/usr/lib/ccache:/usr/lib64/ccache:/usr/lib/ccache/bin:$PATH" }
-before-build = [
-    "pip install -r {project}/Finch-mlir/requirements/requirements.txt",
-    "{project}/Finch-mlir/scripts/docker_prepare_ccache.sh"
-]
 environment-pass = ["HOST_CCACHE_DIR", "SPARSE_BACKEND"]
+before-all = [
+    "\"{project}/scripts/docker_prepare_ccache.sh\""
+]
 
 [tool.cibuildwheel.macos]
 environment = { PATH = "/usr/local/opt/ccache/libexec:$PATH" }
-before-build = [
-    "pip install -r {project}/Finch-mlir/requirements/requirements.txt",
-]
-repair-wheel-command = [
-    "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel} --ignore-missing-dependencies"
-]
 
 [tool.cibuildwheel.windows]
 build = "cp310-win_amd64 cp311-win_amd64 cp312-win_amd64 cp313-win_amd64"
-before-build = [
-    "pip install delvewheel",
-    "pip install -r {project}\\Finch-mlir\\requirements\\requirements.txt",
-]

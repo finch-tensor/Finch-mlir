@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -xe
+set -exuo pipefail
 
 # manylinux prep
 if [[ -f "/etc/centos-release" ]]; then

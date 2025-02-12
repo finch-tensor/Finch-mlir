@@ -1,2 +1,17 @@
 .vscode/
 build/
+build-reqs.txt
+*.egg-info
+dist/
+finch_mlir-*/
+
+# pixi environments
+.pixi
+pixi.lock
+*.egg-info
+
+# Log files
+*.log
+
+/wheelhouse/
+**/*.whl

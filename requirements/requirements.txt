@@ -1,8 +1,0 @@
-setuptools>=42
-wheel
-ninja
-cmake>=3.12
-pybind11>=2.10.4
-numpy
-PyYAML
-nanobind
