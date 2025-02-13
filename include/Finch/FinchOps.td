@@ -225,4 +225,93 @@ def Finch_AssignOp : Finch_Op<"assign", [MemRefsNormalizable, AllTypesMatch<["in
 }
 
 
+// HIGH-LEVEL LAZY API
+
+
+class LazyFinch_Op<string mnemonic, list<Trait> traits = []> :
+    Op<Finch_Dialect, mnemonic, traits>;
+
+
+def LazyFinch_Immediate : LazyFinch_Op<"immediate", [Pure]> {
+    let summary = "Lazy Finch immediate op";
+    let description = [{
+        Logical AST expression for the literal value `val`.
+
+        ```mlir
+            %0 = finch.immediate val : !finch.logicnode
+        ```
+    }];
+    let arguments = (ins AnyType:$val);
+    let results = (outs LazyFinch_LogicNodeType);
+}
+
+def LazyFinch_Deferred : LazyFinch_Op<"deferred", [Pure]> {
+    let summary = "Lazy Finch deferred op";
+    // TODO
+}
+
+def LazyFinch_Field : LazyFinch_Op<"field", [Pure]> {
+    let summary = "Lazy Finch field op";
+    // TODO
+}
+
+def LazyFinch_Alias : LazyFinch_Op<"alias", [Pure]> {
+    let summary = "Lazy Finch alias op";
+    // TODO
+}
+
+def LazyFinch_Table : LazyFinch_Op<"table", [Pure]> {
+    let summary = "Lazy Finch table op";
+    let description = [{
+        Logical AST expression for a tensor object `val`, indexed by fields `idxs...`.
+
+        ```mlir
+            %0 = finch.table val, idxs : !finch.logicnode
+        ```
+    }];
+    let arguments = (ins AnyType:$val, Variadic<AnyType>:$idxs);
+    let results = (outs LazyFinch_LogicNodeType);
+}
+
+def LazyFinch_MapJoin : LazyFinch_Op<"mapjoin", [Pure]> {
+    let summary = "Lazy Finch mapjoin op";
+    let description = [{
+        Logical AST expression for mapping the function `op` across `args...`.
+        The order of fields in the mapjoin is `unique(vcat(map(getfields, args)...))`
+
+        ```mlir
+            %0 = finch.mapjoin op, args : !finch.logicnode
+        ```
+    }];
+    let arguments = (ins AnyType:$op, Variadic<AnyType>:$args);
+    let results = (outs LazyFinch_LogicNodeType);
+}
+
+def LazyFinch_Aggregate : LazyFinch_Op<"aggregate", [Pure]> {
+    let summary = "Lazy Finch aggregate op";
+    let description = [{
+        Logical AST statement that reduces `arg` using `op`, starting with `init`.
+        `idxs` are the dimensions to reduce. May happen in any order.
+
+        ```mlir
+            %0 = finch.aggregate op, init, arg, idxs : !finch.logicnode
+        ```
+    }];
+    let arguments = (ins AnyType:$op, AnyType:$init, AnyType:$arg, Variadic<AnyType>:$args);
+    let results = (outs LazyFinch_LogicNodeType);
+}
+
+def LazyFinch_Reformat : LazyFinch_Op<"reformat", [Pure]> {
+    let summary = "Lazy Finch reformat op";
+    let description = [{
+        Logical AST statement that reformats `arg` into the tensor `tns`.
+
+        ```mlir
+            %0 = finch.reformat tns, arg : !finch.logicnode
+        ```
+    }];
+    let arguments = (ins AnyType:$tns, AnyType:$arg);
+    let results = (outs LazyFinch_LogicNodeType);
+}
+
 #endif // FINCH_OPS

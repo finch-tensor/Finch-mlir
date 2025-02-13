@@ -121,6 +121,15 @@ def FinchLoopletPass: Pass<"finch-looplet-pass"> {
 }
 
 
+// HIGH-LEVEL LAZY API
+
+
+def LazyFinchIsolateReformatsPass: Pass<"lazy-finch-isolate-reformats-pass"> {
+  let summary = "Isolate reformats";
+  let description = [{
+    Optimization pass for isolating reformats.
+  }];
+}
 
 
 #endif // FINCH_PASS
