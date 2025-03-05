@@ -8,9 +8,9 @@
 // minimized and named to reflect the test intent.
 
 
-// CHECK-LABEL:   func.func @test1(
-// CHECK-SAME:                     %[[VAL_0:.*]]: index,
-// CHECK-SAME:                     %[[VAL_1:.*]]: index) -> f32 {
+// CHECK-LABEL:   func.func @singlesequence(
+// CHECK-SAME:                              %[[VAL_0:.*]]: index,
+// CHECK-SAME:                              %[[VAL_1:.*]]: index) -> f32 {
 // CHECK:           %[[VAL_2:.*]] = arith.constant 1 : index
 // CHECK:           %[[VAL_3:.*]] = arith.constant 0.000000e+00 : f32
 // CHECK:           %[[VAL_4:.*]] = arith.constant 4.000000e+00 : f32
@@ -37,7 +37,7 @@
 // CHECK:           %[[VAL_20:.*]] = memref.load %[[VAL_9]][] : memref<f32>
 // CHECK:           return %[[VAL_20]] : f32
 // CHECK:         }
-func.func @test1(%b0:index, %b1:index) -> f32{
+func.func @singlesequence(%b0:index, %b1:index) -> f32{
   %i1 = arith.constant 1 : index
   %f0 = arith.constant 0.0 : f32
   %f1 = arith.constant 4.0 : f32
@@ -63,9 +63,10 @@ func.func @test1(%b0:index, %b1:index) -> f32{
   return %result : f32
 }
 
-// CHECK-LABEL:   func.func @test2(
-// CHECK-SAME:                     %[[VAL_0:.*]]: index,
-// CHECK-SAME:                     %[[VAL_1:.*]]: index) -> f32 {
+
+// CHECK-LABEL:   func.func @doublesequence(
+// CHECK-SAME:                              %[[VAL_0:.*]]: index,
+// CHECK-SAME:                              %[[VAL_1:.*]]: index) -> f32 {
 // CHECK:           %[[VAL_2:.*]] = arith.constant 1 : index
 // CHECK:           %[[VAL_3:.*]] = arith.constant 0.000000e+00 : f32
 // CHECK:           %[[VAL_4:.*]] = arith.constant 4.000000e+00 : f32
@@ -117,7 +118,7 @@ func.func @test1(%b0:index, %b1:index) -> f32{
 // CHECK:           %[[VAL_41:.*]] = memref.load %[[VAL_10]][] : memref<f32>
 // CHECK:           return %[[VAL_41]] : f32
 // CHECK:         }
-func.func @test2(%b0:index, %b1:index) -> f32{
+func.func @doublesequence(%b0:index, %b1:index) -> f32{
   %i1 = arith.constant 1 : index
   %f0 = arith.constant 0.0 : f32
   %f1 = arith.constant 4.0 : f32
@@ -148,9 +149,9 @@ func.func @test2(%b0:index, %b1:index) -> f32{
 }
 
 
-// CHECK-LABEL:   func.func @test3(
-// CHECK-SAME:                     %[[VAL_0:.*]]: index,
-// CHECK-SAME:                     %[[VAL_1:.*]]: index) -> f32 {
+// CHECK-LABEL:   func.func @runsequence(
+// CHECK-SAME:                           %[[VAL_0:.*]]: index,
+// CHECK-SAME:                           %[[VAL_1:.*]]: index) -> f32 {
 // CHECK:           %[[VAL_2:.*]] = arith.constant 1 : index
 // CHECK:           %[[VAL_3:.*]] = arith.constant 0.000000e+00 : f32
 // CHECK:           %[[VAL_4:.*]] = arith.constant 4.000000e+00 : f32
@@ -181,7 +182,7 @@ func.func @test2(%b0:index, %b1:index) -> f32{
 // CHECK:           %[[VAL_24:.*]] = memref.load %[[VAL_9]][] : memref<f32>
 // CHECK:           return %[[VAL_24]] : f32
 // CHECK:         }
-func.func @test3(%b0:index, %b1:index) -> f32{
+func.func @runsequence(%b0:index, %b1:index) -> f32{
   %i1 = arith.constant 1 : index
   %f0 = arith.constant 0.0 : f32
   %f1 = arith.constant 4.0 : f32
