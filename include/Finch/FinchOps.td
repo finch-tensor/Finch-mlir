@@ -114,8 +114,24 @@ def Finch_RunOp : Finch_Op<"run", [Pure]> {
 def Finch_SequenceOp : Finch_Op<"sequence", [Pure]> {
     let summary = "Finch Sequence Looplets";
     let description = [{
+        This operation defines the Sequence Looplet.
+        It takes three arguments : 
+            (1) Splitting Coordinate (of numeric Type or index type)
+            (2) FirstBody (of Looplet Type)
+            (3) SecondBody (of Looplet Type)
+
+        `finch.sequence crd, body1, body2` can be thought as a function
+
+        f(x) = body1 (if x < crd)
+               body2 (if x >= crd)
+
         ```mlir
-        %3 = finch.sequence %lb %looplet1 %looplet2 : (i32, !finch.looplet, !finch.looplet) -> !finch.looplet
+        %0 = arith.constant 0 : f32
+        %1 = arith.constant 1 : f32
+        %2 = finch.run %0 : (f32) -> (!finch.looplet)
+        %3 = finch.run %1 : (f32) -> (!finch.looplet)
+        %4 = arith.constant 4 : index
+        %5 = finch.sequence %4, %2, %3 : (index, !finch.looplet, !finch.looplet) -> !finch.looplet
         ```
     }];
 
