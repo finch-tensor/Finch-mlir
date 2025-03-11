@@ -225,4 +225,22 @@ def Finch_AssignOp : Finch_Op<"assign", [MemRefsNormalizable, AllTypesMatch<["in
 }
 
 
+
+def Finch_CurrentSizeOp : Finch_Op<"current_size", [Pure]> {
+    let summary = "Buffer dialect's current_size operation";
+    let description = [{
+        ```mlir
+        %buffer = memref.alloc() : memref<i32>
+        %0 = finch.current_size %buffer : memref<i32> -> index
+        ```
+    }];
+
+    let arguments = (ins AnyMemRef:$memref); 
+    let results = (outs Index:$res);
+
+    let assemblyFormat = [{ 
+        $memref attr-dict `:` type($memref)  `->`  type($res) 
+    }];
+}
+
 #endif // FINCH_OPS
