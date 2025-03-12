@@ -3,6 +3,7 @@ add_mlir_dialect_library(MLIRFinch
         FinchDialect.cpp
         FinchOps.cpp
         FinchRunPass.cpp
+        FinchSequencePass.cpp
         FinchPasses.cpp
 
         ADDITIONAL_HEADER_DIRS
