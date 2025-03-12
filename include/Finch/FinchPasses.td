@@ -26,51 +26,29 @@ def FinchInstantiate: Pass<"finch-instantiate"> {
 def FinchSimplifier: Pass<"finch-simplifier"> {
   let summary = "finch simplifier";
   let description = [{
-    Switches the name of a FuncOp named `bar` to `foo` and folds.
-    ```
-    func.func @bar() {
-      return
-    }
-    // Gets transformed to:
-    func.func @foo() {
-      return
-    }
-    ```
+    to be filled 
   }];
 }
 
 def FinchLoopletRun: Pass<"finch-looplet-run"> {
   let summary = "Compiler Pass for Run Looplets";
   let description = [{
-    Switches the name of a FuncOp named `bar` to `foo` and folds.
+    Lowers finch.access of finch.run inside scf.for.
+    Specifically, it replaces finch.access with the argument of finch.run.
+
     ```
-    affine.for %i = %lb to %ub ... {
-       %0 = finch.run %lb2 %ub2 %val
-       %1 = finch.access %0 %i
-       ... 
+    %0 = finch.run %val : (f32) -> (!finch.looplet)
+    scf.for %i = %lb to %ub ... {
+       %1 = finch.access %0 %i : f32
     }
+    ```
 
     to
 
-    %lb_1 = arith.min %lb %lb2
-   
-    %newlb = arith.max %lb %lb2
-    %newub = arith.min %ub %ub2
-    
-    %ub_2 = arith.max %ub %ub2
-
-    affine.for %i = %lb_1 to %newlb ... {
-      replace %1 to %undefined
+    ```
+    scf.for %i = %lb to %ub ... {
+       %1 = %val 
     }
-
-    affine.for %i = %newlb to %newub ... {
-      replace %1 to %val
-    }
-
-    affine.for %i = %newlb to %newub ... {
-      replace %1 to %val
-    }
-
     ```
   }];
 }
@@ -108,19 +86,5 @@ def FinchLoopletLookup: Pass<"finch-looplet-lookup"> {
     ```
   }];
 }
-
-def FinchLoopletPass: Pass<"finch-looplet-pass"> {
-  let summary = "Compiler Pass for Looplets";
-  let description = [{
-    Compiler Pass for handling all looplets
-    ```
-    to be filled.
-
-    ```
-  }];
-}
-
-
-
 
 #endif // FINCH_PASS

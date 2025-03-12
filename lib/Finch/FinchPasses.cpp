@@ -25,11 +25,9 @@
 namespace mlir::finch {
 #define GEN_PASS_DEF_FINCHSIMPLIFIER
 #define GEN_PASS_DEF_FINCHINSTANTIATE
-#define GEN_PASS_DEF_FINCHLOOPLETRUN
 #define GEN_PASS_DEF_FINCHLOOPLETSEQUENCE
 #define GEN_PASS_DEF_FINCHLOOPLETSTEPPER
 #define GEN_PASS_DEF_FINCHLOOPLETLOOKUP
-#define GEN_PASS_DEF_FINCHLOOPLETPASS
 #include "Finch/FinchPasses.h.inc"
 
 namespace {
@@ -231,76 +229,6 @@ public:
   }
 };
 
-
-class FinchLoopletRunRewriter : public OpRewritePattern<scf::ForOp> {
-public:
-  using OpRewritePattern<scf::ForOp>::OpRewritePattern;
-  LogicalResult matchAndRewrite(scf::ForOp forOp,
-                                PatternRewriter &rewriter) const final {
-    auto loopIndex = forOp.getInductionVar();
-    
-    OpBuilder builder(forOp);
-    Location loc = forOp.getLoc();
-
-    for (auto& accessOp : *forOp.getBody()) {
-      if (!isa<mlir::finch::AccessOp>(accessOp)) 
-        continue;
-      
-      Value accessIndex = accessOp.getOperand(1);
-      if (accessIndex != loopIndex) 
-        continue;
-      
-      auto runLooplet = dyn_cast<finch::RunOp>(
-          accessOp.getOperand(0).getDefiningOp());
-      if (!runLooplet) 
-        continue;
-        
-      Value runValue = runLooplet.getOperand(); 
-
-      // If run was not at the leaf node,
-      // we traverse all the down untill the leaf and
-      // replace leaf with the constant run value.
-      if (accessOp.getResultTypes()[0].isIndex()) {
-        WalkResult walkResult = 
-          forOp.walk<WalkOrder::PreOrder>([&](finch::AccessOp aOp) {
-            bool isLeafLevel = !(aOp->getResultTypes()[0].isIndex());
-            if (!isLeafLevel) {
-              return WalkResult::advance();
-            }
-           
-            // Is leaflevel aOp dependent to the accessOp?
-            // if so, replace the value with run value
-            Operation* op_ = aOp;
-            while (isa<finch::AccessOp>(op_) 
-                || isa<finch::GetLevelOp>(op_)) {
-              if (isa<finch::AccessOp>(op_)) {
-                Operation* lvl = op_->getOperand(0).getDefiningOp();
-                op_ = lvl;
-              } else if (isa<finch::GetLevelOp>(op_)) {
-                Operation* access = op_->getOperand(1).getDefiningOp();
-                op_ = access;
-                if (access == &accessOp) {
-                  rewriter.replaceOp(aOp, runValue);
-                  return WalkResult::interrupt();
-                }
-              } 
-            }
-            
-            return WalkResult::advance();
-          }
-        );
-      } else {
-        // Replace Access to Run Value
-        rewriter.replaceOp(&accessOp, runValue);
-      }
-
-
-      return success();
-    }
-    
-    return failure();
-  }
-};
 
 class FinchLoopletSequenceRewriter : public OpRewritePattern<scf::ForOp> {
 public:
@@ -675,22 +603,6 @@ public:
   }
 };
 
-class FinchLoopletRun
-    : public impl::FinchLoopletRunBase<FinchLoopletRun> {
-public:
-  using impl::FinchLoopletRunBase<
-      FinchLoopletRun>::FinchLoopletRunBase;
-  void runOnOperation() final {
-    RewritePatternSet patterns(&getContext());
-    patterns.add<FinchLoopletRunRewriter>(&getContext());
-    //patterns.add<FinchMemrefStoreLoadRewriter>(&getContext());
-    //patterns.add<FinchSemiringRewriter>(&getContext());
-    FrozenRewritePatternSet patternSet(std::move(patterns));
-    if (failed(applyPatternsGreedily(getOperation(), patternSet)))
-      signalPassFailure();
-  }
-};
-
 class FinchLoopletSequence
     : public impl::FinchLoopletSequenceBase<FinchLoopletSequence> {
 public:
@@ -732,27 +644,6 @@ public:
       signalPassFailure();
   }
 };
-
-
-class FinchLoopletPass
-    : public impl::FinchLoopletPassBase<FinchLoopletPass> {
-public:
-  using impl::FinchLoopletPassBase<
-      FinchLoopletPass>::FinchLoopletPassBase;
-  void runOnOperation() final {
-    RewritePatternSet patterns(&getContext());
-    patterns.add<FinchLoopletRunRewriter>(&getContext());
-    patterns.add<FinchLoopletSequenceRewriter>(&getContext()); 
-    patterns.add<FinchLoopletStepperRewriter>(&getContext()); 
-    patterns.add<FinchLoopletLookupRewriter>(&getContext()); 
-    FrozenRewritePatternSet patternSet(std::move(patterns));
-    if (failed(applyPatternsGreedily(getOperation(), patternSet)))
-      signalPassFailure();
-  }
-};
-
-
-
 
 
 } // namespace
