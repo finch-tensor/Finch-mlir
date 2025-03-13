@@ -150,8 +150,43 @@ def Finch_LookupOp : Finch_Op<"lookup",[Pure, NoTerminator]> {
 def Finch_StepperOp : Finch_Op<"stepper",[Pure, NoTerminator]> {
     let summary = "Finch Stepper Looplets";
     let description = [{
+        This operation defines the Stepper Looplet, which represents repetitive patterns in child looplets. 
+        Stepper takes four function arguments that always return with finch.return:
+
+        1. **seek**: `coordinate:index -> position:index`  
+           Returns the position of the child looplet whose range includes the given input coordinate.
+
+        2. **stop**: `position:index -> coordinate:index`  
+           Returns the coordinate at which the child looplet at the given position ends.
+
+        3. **body**: `position:index -> child:looplet`  
+           Returns the child looplet located at the specified position.
+
+        4. **next**: `position:index -> position:index`  
+           Returns the subsequent position following the given position.
+
         ```mlir
-        %3 = finch.stepper %lb %ub : 
+        %3 = finch.stepper
+          seek = {
+            ^bb(%crd : index):
+              %pos = arith.addi %pos, %c1 : index
+              finch.return %pos : index
+          }
+          stop = {
+            ^bb(%pos : index):
+              %stopcrd = arith.muli %pos, %shape : index
+              finch.return %stopcrd : index
+          }
+          body = {
+            ^bb(%pos : index):
+              %run = finch.run %f1 : (f32) -> (!finch.looplet)
+              finch.return %run : !finch.looplet
+          }
+          next = {
+            ^bb(%pos : index):
+              %nextpos = arith.addi %pos, %c1 : index
+              finch.return %nextpos : index
+          }
         ```
     }];
 
