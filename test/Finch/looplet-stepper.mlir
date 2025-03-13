@@ -10,51 +10,53 @@
 // CHECK-LABEL:   func.func @test1(
 // CHECK-SAME:                     %[[VAL_0:.*]]: index,
 // CHECK-SAME:                     %[[VAL_1:.*]]: index) -> f32 {
-// CHECK:           %[[VAL_2:.*]] = arith.constant 0 : index
-// CHECK:           %[[VAL_3:.*]] = arith.constant 0.000000e+00 : f32
-// CHECK:           %[[VAL_4:.*]] = arith.constant 4.000000e+00 : f32
-// CHECK:           %[[VAL_5:.*]] = arith.constant 1 : index
+// CHECK:           %[[VAL_2:.*]] = arith.constant 0.000000e+00 : f32
+// CHECK:           %[[VAL_3:.*]] = arith.constant 4.000000e+00 : f32
+// CHECK:           %[[VAL_4:.*]] = arith.constant 1 : index
+// CHECK:           %[[VAL_5:.*]] = arith.constant 2 : index
 // CHECK:           %[[VAL_6:.*]] = memref.alloc() : memref<f32>
-// CHECK:           memref.store %[[VAL_3]], %[[VAL_6]][] : memref<f32>
-// CHECK:           %[[VAL_7:.*]]:2 = scf.while (%[[VAL_8:.*]] = %[[VAL_2]], %[[VAL_9:.*]] = %[[VAL_0]]) : (index, index) -> (index, index) {
+// CHECK:           memref.store %[[VAL_2]], %[[VAL_6]][] : memref<f32>
+// CHECK:           %[[VAL_7:.*]]:2 = scf.while (%[[VAL_8:.*]] = %[[VAL_0]], %[[VAL_9:.*]] = %[[VAL_0]]) : (index, index) -> (index, index) {
 // CHECK:             %[[VAL_10:.*]] = arith.cmpi ult, %[[VAL_9]], %[[VAL_1]] : index
 // CHECK:             scf.condition(%[[VAL_10]]) %[[VAL_8]], %[[VAL_9]] : index, index
 // CHECK:           } do {
 // CHECK:           ^bb0(%[[VAL_11:.*]]: index, %[[VAL_12:.*]]: index):
-// CHECK:             %[[VAL_13:.*]] = arith.minui %[[VAL_1]], %[[VAL_11]] : index
-// CHECK:             %[[VAL_14:.*]] = finch.run %[[VAL_4]] : (f32) -> (!finch.looplet)
-// CHECK:             scf.for %[[VAL_15:.*]] = %[[VAL_12]] to %[[VAL_13]] step %[[VAL_5]] {
-// CHECK:               %[[VAL_16:.*]] = finch.access %[[VAL_14]], %[[VAL_15]] : f32
-// CHECK:               %[[VAL_17:.*]] = memref.load %[[VAL_6]][] : memref<f32>
-// CHECK:               %[[VAL_18:.*]] = arith.addf %[[VAL_16]], %[[VAL_17]] : f32
-// CHECK:               memref.store %[[VAL_18]], %[[VAL_6]][] : memref<f32>
+// CHECK:             %[[VAL_13:.*]] = arith.addi %[[VAL_11]], %[[VAL_5]] : index
+// CHECK:             %[[VAL_14:.*]] = arith.minui %[[VAL_1]], %[[VAL_13]] : index
+// CHECK:             %[[VAL_15:.*]] = finch.run %[[VAL_3]] : (f32) -> (!finch.looplet)
+// CHECK:             scf.for %[[VAL_16:.*]] = %[[VAL_12]] to %[[VAL_14]] step %[[VAL_4]] {
+// CHECK:               %[[VAL_17:.*]] = finch.access %[[VAL_15]], %[[VAL_16]] : f32
+// CHECK:               %[[VAL_18:.*]] = memref.load %[[VAL_6]][] : memref<f32>
+// CHECK:               %[[VAL_19:.*]] = arith.addf %[[VAL_17]], %[[VAL_18]] : f32
+// CHECK:               memref.store %[[VAL_19]], %[[VAL_6]][] : memref<f32>
 // CHECK:             }
-// CHECK:             %[[VAL_19:.*]] = arith.cmpi eq, %[[VAL_11]], %[[VAL_13]] : index
-// CHECK:             %[[VAL_20:.*]] = scf.if %[[VAL_19]] -> (index) {
-// CHECK:               %[[VAL_21:.*]] = arith.addi %[[VAL_11]], %[[VAL_5]] : index
-// CHECK:               scf.yield %[[VAL_21]] : index
+// CHECK:             %[[VAL_20:.*]] = arith.cmpi eq, %[[VAL_13]], %[[VAL_14]] : index
+// CHECK:             %[[VAL_21:.*]] = scf.if %[[VAL_20]] -> (index) {
+// CHECK:               %[[VAL_22:.*]] = arith.addi %[[VAL_11]], %[[VAL_4]] : index
+// CHECK:               scf.yield %[[VAL_22]] : index
 // CHECK:             } else {
 // CHECK:               scf.yield %[[VAL_11]] : index
 // CHECK:             }
-// CHECK:             scf.yield %[[VAL_20]], %[[VAL_13]] : index, index
+// CHECK:             scf.yield %[[VAL_21]], %[[VAL_14]] : index, index
 // CHECK:           }
-// CHECK:           %[[VAL_22:.*]] = memref.load %[[VAL_6]][] : memref<f32>
-// CHECK:           return %[[VAL_22]] : f32
+// CHECK:           %[[VAL_23:.*]] = memref.load %[[VAL_6]][] : memref<f32>
+// CHECK:           return %[[VAL_23]] : f32
 // CHECK:         }
 func.func @test1(%b0:index, %b1:index) -> f32{
   %f0 = arith.constant 0.0 : f32
   %f1 = arith.constant 4.0 : f32
   %c1 = arith.constant 1 : index
+  %c2 = arith.constant 2 : index
 
   %step = finch.stepper
       seek={
         ^bb0(%idx : index):
-          %firstpos = arith.constant 0 : index 
-          finch.return %firstpos : index
+          finch.return %idx : index
       }
       stop={
         ^bb(%pos : index):
-          finch.return %pos : index
+          %crd = arith.addi %pos, %c2 : index
+          finch.return %crd : index
       }
       body={
         ^bb(%pos : index):
