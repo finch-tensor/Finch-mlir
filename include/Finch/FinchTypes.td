@@ -45,4 +45,14 @@ def AnyNumberOrIndex : AnyTypeOf<[AnyInteger, AnyFloat, Index]>;
 def Looplet : AnyTypeOf<[Finch_LoopletType]>;
 def LoopletOrNumber : AnyTypeOf<[Finch_LoopletType, AnyNumber]>;
 
+
+
+def Finch_BufferType: Finch_Type<"Buffer", "buffer"> {
+    let summary = "Finch buffer type";
+    let description = "Buffer type in finch dialect";
+    let mnemonic = "buffer";
+    //let parameters = (ins AnyMemRef:$memref);
+    //let assemblyFormat = "`(` $memref `)`"; 
+}
+
 #endif // FINCH_TYPES
