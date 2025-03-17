@@ -260,6 +260,76 @@ def Finch_CurrentSizeOp : Finch_Op<"current_size", [Pure]> {
     }];
 }
 
+def Finch_ResizeIfSmallerOp : Finch_Op<"resize_if_smaller", [Pure]> {
+    let summary = "Buffer dialect's resize_if_smaller operation";
+    let description = [{
+        ```mlir
+        %0 = memref.alloc() : memref<3xi32>
+        %buffer = finch.make_buffer(%0): !finch.buffer
+        %bufferBig = finch.resize_if_smaller(%buffer, %wanted_size): (!finch.buffer, index) -> !finch.buffer
+        ```
+    }];
+
+    let arguments = (ins Finch_BufferType:$buffer, Index:$size); 
+    let results = (outs Finch_BufferType:$res);
+
+    let assemblyFormat = [{ 
+        `(` $buffer `,` $size `)` attr-dict `:` `(` type($buffer) `,` type($size) `)` `->`  type($res)
+    }];
+}
+
+def Finch_FillRangeOp : Finch_Op<"fill_range", [Pure]> {
+    let summary = "Buffer dialect's fill_range operation";
+    let description = [{
+        ```mlir
+        %0 = memref.alloc() : memref<3xi32>
+        %buffer = finch.make_buffer(%0): !finch.buffer
+        %bufferFilled = finch.fill_range(%buffer, %value, %start, %end): (!finch.buffer, i32, index, index) -> !finch.buffer
+        ```
+    }];
+
+    let arguments = (ins Finch_BufferType:$buffer, I32:$value, Index:$start, Index:$end); 
+    let results = (outs Finch_BufferType:$res);
+
+    let assemblyFormat = [{ 
+        `(` $buffer `,` $value `,` $start `,` $end `)` attr-dict `:` `(` type($buffer) `,` type($value) `,` type($start) `,` type($end) `)` `->`  type($res)
+    }];
+}
+
+def Finch_BufferLoadOp : Finch_Op<"buffer_load", [Pure]> {
+    let summary = "Buffer dialect's buffer_load operation";
+    let description = [{
+        ```mlir
+        %0 = memref.alloc() : memref<3xi32>
+        %buffer = finch.make_buffer(%0): !finch.buffer
+        %value = finch.buffer_load %buffer, %index: (!finch.buffer, index) -> i32
+        ```
+    }];
+
+    let arguments = (ins Finch_BufferType:$buffer, Index:$index); 
+    let results = (outs I32:$res);
+
+    let assemblyFormat = [{ 
+        $buffer `,` $index attr-dict `:` `(` type($buffer) `,` type($index) `)` `->`  type($res)
+    }];
+}
+
+def Finch_BufferStoreOp : Finch_Op<"buffer_store", [Pure]> {
+    let summary = "Buffer dialect's buffer_store operation";
+    let description = [{
+        ```mlir
+        %0 = memref.alloc() : memref<3xi32>
+        %buffer = finch.make_buffer(%0): !finch.buffer
+        finch.buffer_store %value, %buffer, %index: (i32, !finch.buffer, index)
+        ```
+    }];
+
+    let arguments = (ins I32:$value, Finch_BufferType:$buffer, Index:$index); 
+
+    let assemblyFormat = [{ 
+        $value `,` $buffer `,` $index attr-dict `:` `(` type($value) `,` type($buffer) `,` type($index) `)`
+    }];
+}
 
 #endif // FINCH_OPS
 
