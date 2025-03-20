@@ -120,7 +120,7 @@ def FinchLoopletPass: Pass<"finch-looplet-pass"> {
   }];
 }
 
-def FinchBufferLoadPass: Pass<"finch-buffer-load-pass"> {
+def FinchBufferLoad: Pass<"finch-buffer-load-pass"> {
   let summary = "Compiler Pass for Buffer Loads";
   let description = [{
       ```mlir
