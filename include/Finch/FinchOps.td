@@ -20,8 +20,7 @@ include "mlir/IR/RegionKindInterface.td"
 include "mlir/Interfaces/ViewLikeInterface.td"
 include "mlir/IR/SymbolInterfaces.td"
 
-def Finch_FooOp : Finch_Op<"foo", [Pure,
-                                             SameOperandsAndResultType]> {
+def Finch_FooOp : Finch_Op<"foo", [Pure,SameOperandsAndResultType]> {
     let summary = "Illustrates how to define an operation.";
     let description = [{
         The `finch.foo` operation illustrates how to define a new
@@ -52,13 +51,21 @@ def Finch_FooOp : Finch_Op<"foo", [Pure,
 def Finch_AccessOp : Finch_Op<"access", [Pure]> {
     let summary = "Finch Access op";
     let description = [{
+        This operation accesses a Looplet using a loop index.
+        It takes two input arguments: (1) a Looplet (of Looplet Type) and (2) a loop index (of Index Type).
+        It then outputs an element of the Looplet at the corresponding input index.
+
         ```mlir
-        %2 = finch.access %0 %1 : Looplet, index
+        %0 = arith.constant 3.3 : f32
+        %1 = finch.run %0 : (f32) -> (!finch.looplet)
+
+        scf.for %i = %b0 to %b1 step %1 {
+            %2 = finch.access %1, %i : f32
+        }
         ```
     }];
 
     let arguments = (ins Finch_LoopletType:$input, Index:$idx); 
-    //let results = (outs LoopletOrNumber:$res);
     let results = (outs AnyType:$res);
 
     let assemblyFormat = [{
@@ -86,12 +93,16 @@ def Finch_NextLevelOp : Finch_Op<"nextlevel", [Pure]> {
 def Finch_RunOp : Finch_Op<"run", [Pure]> {
     let summary = "Finch Run Looplets";
     let description = [{
+        This operation defines the Run Looplet.
+        It takes a single argument: an element of runs, which is of a numeric type.
+
         ```mlir
-        %3 = finch.run %val : f32 -> looplet
+        %0 = arith.constant 4 : i32
+        %1 = finch.run %0 : (i32) -> (!finch.looplet)
         ```
     }];
 
-    let arguments = (ins LoopletOrNumber:$val); 
+    let arguments = (ins AnyNumber:$val); 
     let results = (outs Finch_LoopletType:$res);
 
     let assemblyFormat = [{
@@ -103,8 +114,24 @@ def Finch_RunOp : Finch_Op<"run", [Pure]> {
 def Finch_SequenceOp : Finch_Op<"sequence", [Pure]> {
     let summary = "Finch Sequence Looplets";
     let description = [{
+        This operation defines the Sequence Looplet.
+        It takes three arguments : 
+            (1) Splitting Coordinate (of numeric Type or index type)
+            (2) FirstBody (of Looplet Type)
+            (3) SecondBody (of Looplet Type)
+
+        `finch.sequence crd, body1, body2` can be thought as a function
+
+        f(x) = body1 (if x < crd)
+               body2 (if x >= crd)
+
         ```mlir
-        %3 = finch.sequence %lb %looplet1 %looplet2 : (i32, !finch.looplet, !finch.looplet) -> !finch.looplet
+        %0 = arith.constant 0 : f32
+        %1 = arith.constant 1 : f32
+        %2 = finch.run %0 : (f32) -> (!finch.looplet)
+        %3 = finch.run %1 : (f32) -> (!finch.looplet)
+        %4 = arith.constant 4 : index
+        %5 = finch.sequence %4, %2, %3 : (index, !finch.looplet, !finch.looplet) -> !finch.looplet
         ```
     }];
 

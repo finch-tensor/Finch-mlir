@@ -25,11 +25,8 @@
 namespace mlir::finch {
 #define GEN_PASS_DEF_FINCHSIMPLIFIER
 #define GEN_PASS_DEF_FINCHINSTANTIATE
-#define GEN_PASS_DEF_FINCHLOOPLETRUN
-#define GEN_PASS_DEF_FINCHLOOPLETSEQUENCE
 #define GEN_PASS_DEF_FINCHLOOPLETSTEPPER
 #define GEN_PASS_DEF_FINCHLOOPLETLOOKUP
-#define GEN_PASS_DEF_FINCHLOOPLETPASS
 #define GEN_PASS_DEF_FINCHBUFFERLOAD
 #include "Finch/FinchPasses.h.inc"
 
@@ -228,284 +225,6 @@ public:
       return success();
     }
 
-    return failure();
-  }
-};
-
-
-class FinchLoopletRunRewriter : public OpRewritePattern<scf::ForOp> {
-public:
-  using OpRewritePattern<scf::ForOp>::OpRewritePattern;
-  LogicalResult matchAndRewrite(scf::ForOp forOp,
-                                PatternRewriter &rewriter) const final {
-    auto loopIndex = forOp.getInductionVar();
-    
-    OpBuilder builder(forOp);
-    Location loc = forOp.getLoc();
-
-    for (auto& accessOp : *forOp.getBody()) {
-      if (!isa<mlir::finch::AccessOp>(accessOp)) 
-        continue;
-      
-      Value accessIndex = accessOp.getOperand(1);
-      if (accessIndex != loopIndex) 
-        continue;
-      
-      auto runLooplet = dyn_cast<finch::RunOp>(
-          accessOp.getOperand(0).getDefiningOp());
-      if (!runLooplet) 
-        continue;
-        
-      Value runValue = runLooplet.getOperand(); 
-
-      // If run was not at the leaf node,
-      // we traverse all the down untill the leaf and
-      // replace leaf with the constant run value.
-      if (accessOp.getResultTypes()[0].isIndex()) {
-        WalkResult walkResult = 
-          forOp.walk<WalkOrder::PreOrder>([&](finch::AccessOp aOp) {
-            bool isLeafLevel = !(aOp->getResultTypes()[0].isIndex());
-            if (!isLeafLevel) {
-              return WalkResult::advance();
-            }
-           
-            // Is leaflevel aOp dependent to the accessOp?
-            // if so, replace the value with run value
-            Operation* op_ = aOp;
-            while (isa<finch::AccessOp>(op_) 
-                || isa<finch::GetLevelOp>(op_)) {
-              if (isa<finch::AccessOp>(op_)) {
-                Operation* lvl = op_->getOperand(0).getDefiningOp();
-                op_ = lvl;
-              } else if (isa<finch::GetLevelOp>(op_)) {
-                Operation* access = op_->getOperand(1).getDefiningOp();
-                op_ = access;
-                if (access == &accessOp) {
-                  rewriter.replaceOp(aOp, runValue);
-                  return WalkResult::interrupt();
-                }
-              } 
-            }
-            
-            return WalkResult::advance();
-          }
-        );
-      } else {
-        // Replace Access to Run Value
-        rewriter.replaceOp(&accessOp, runValue);
-      }
-
-
-      return success();
-    }
-    
-    return failure();
-  }
-};
-
-class FinchLoopletSequenceRewriter : public OpRewritePattern<scf::ForOp> {
-  public:
-    using OpRewritePattern<scf::ForOp>::OpRewritePattern;
-  
-    LogicalResult matchAndRewrite(scf::ForOp forOp,
-                                  PatternRewriter &rewriter) const final {
-      auto loopIndex = forOp.getInductionVar();
-      
-      OpBuilder builder(forOp);
-      Location loc = forOp.getLoc();
-      
-      for (auto& accessOp : *forOp.getBody()) {
-        if (!isa<mlir::finch::AccessOp>(accessOp)) 
-          continue;
-        
-        Value accessIndex = accessOp.getOperand(1);
-        if (accessIndex != loopIndex) 
-          continue;
-        
-        auto seqLooplet = dyn_cast<finch::SequenceOp>(
-            accessOp.getOperand(0).getDefiningOp());
-        if (!seqLooplet) 
-          continue;
-           
-        rewriter.setInsertionPoint(forOp);
-        // Main Sequence Rewrite          
-        IRMapping mapper1;
-        IRMapping mapper2;
-        Operation* newForOp1 = rewriter.clone(*forOp, mapper1);
-        Operation* newForOp2 = rewriter.clone(*forOp, mapper2);
-        rewriter.moveOpAfter(newForOp1, forOp);
-        rewriter.moveOpAfter(newForOp2, newForOp1);
-  
-        // Replace Access operand with Sequence bodies
-        auto newAccess1 = mapper1.lookupOrDefault(&accessOp);
-        auto newAccess2 = mapper2.lookupOrDefault(&accessOp);
-        auto bodyLooplet1 = seqLooplet.getOperand(1);
-        auto bodyLooplet2 = seqLooplet.getOperand(2);
-        auto newBodyLooplet1 = mapper1.lookupOrDefault(bodyLooplet1);
-        auto newBodyLooplet2 = mapper2.lookupOrDefault(bodyLooplet2);
-        newAccess1->setOperand(0, newBodyLooplet1);
-        newAccess2->setOperand(0, newBodyLooplet2);
-        
-        // Intersection
-        Value loopLb = forOp.getLowerBound();
-        Value loopUb = forOp.getUpperBound();
-  
-        // Finch.jl used both closed endpoints,
-        // but Finch.mlir uses [st,en) for now.
-        // This is for aligning syntax with scf.for
-        // scf.for uses [st,en).
-        // TODO: We need to make finch.for
-        //
-        //       firstBodyUb=secondBodyLb
-        //                  v
-        // [---firstBody---)[---secondBody---)
-        Value firstBodyUb = seqLooplet.getOperand(0);
-        Value secondBodyLb = firstBodyUb;
-        if (!firstBodyUb.getType().isIndex()) {
-          firstBodyUb = rewriter.create<arith::IndexCastOp>(
-              loc, rewriter.getIndexType(), firstBodyUb);
-          secondBodyLb = rewriter.create<arith::IndexCastOp>(
-              loc, rewriter.getIndexType(), secondBodyLb);
-        }         
-        
-        // Main intersect
-        Value newFirstLoopUb = rewriter.create<arith::MinUIOp>(
-            loc, loopUb, firstBodyUb);
-        Value newSecondLoopLb = rewriter.create<arith::MaxUIOp>(
-            loc, loopLb, secondBodyLb);
-        cast<scf::ForOp>(newForOp1).setUpperBound(newFirstLoopUb);
-        cast<scf::ForOp>(newForOp2).setLowerBound(newSecondLoopLb);
-  
-  
-        // Build a chain on scf.for
-        // %0 = tensor.empty()
-        // %1 = scf.for $i = $b0 to %b1 step %c1 iter_args(%v = %0) //forOp
-        // %2 = scf.for $i = $b0 to %b2 step %c1 iter_args(%v = %0) //newForOp1
-        // %3 = scf.for $i = $b2 to %b1 step %c1 iter_args(%v = %0) //newForOp2
-        // return %1
-        //
-        // vvv
-        //
-        // %0 = tensor.empty()
-        // %1 = scf.for $i = $b0 to %b2 step %c1 iter_args(%v = %0) //newForOp1  
-        // %2 = scf.for $i = $b2 to %b1 step %c1 iter_args(%v = %1) //newForOp2
-        // return %2
-  
-        // First three are lowerbound, upperbound, and step
-        int numIterArgs = newForOp2->getNumOperands() - 3;
-        if (numIterArgs > 0) {
-          rewriter.replaceAllUsesWith(forOp->getResults(), newForOp2->getResults());
-          newForOp2->setOperands(3, numIterArgs, newForOp1->getResults());
-        }
-  
-        rewriter.eraseOp(forOp);
-        
-        return success();
-      }
-      return failure();
-    }
-  };
-
-
-class FinchLoopletSequenceRewriter : public OpRewritePattern<scf::ForOp> {
-public:
-  using OpRewritePattern<scf::ForOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(scf::ForOp forOp,
-                                PatternRewriter &rewriter) const final {
-    auto loopIndex = forOp.getInductionVar();
-    
-    OpBuilder builder(forOp);
-    Location loc = forOp.getLoc();
-    
-    for (auto& accessOp : *forOp.getBody()) {
-      if (!isa<mlir::finch::AccessOp>(accessOp)) 
-        continue;
-      
-      Value accessIndex = accessOp.getOperand(1);
-      if (accessIndex != loopIndex) 
-        continue;
-      
-      auto seqLooplet = dyn_cast<finch::SequenceOp>(
-          accessOp.getOperand(0).getDefiningOp());
-      if (!seqLooplet) 
-        continue;
-         
-      rewriter.setInsertionPoint(forOp);
-      // Main Sequence Rewrite          
-      IRMapping mapper1;
-      IRMapping mapper2;
-      Operation* newForOp1 = rewriter.clone(*forOp, mapper1);
-      Operation* newForOp2 = rewriter.clone(*forOp, mapper2);
-      rewriter.moveOpAfter(newForOp1, forOp);
-      rewriter.moveOpAfter(newForOp2, newForOp1);
-
-      // Replace Access operand with Sequence bodies
-      auto newAccess1 = mapper1.lookupOrDefault(&accessOp);
-      auto newAccess2 = mapper2.lookupOrDefault(&accessOp);
-      auto bodyLooplet1 = seqLooplet.getOperand(1);
-      auto bodyLooplet2 = seqLooplet.getOperand(2);
-      auto newBodyLooplet1 = mapper1.lookupOrDefault(bodyLooplet1);
-      auto newBodyLooplet2 = mapper2.lookupOrDefault(bodyLooplet2);
-      newAccess1->setOperand(0, newBodyLooplet1);
-      newAccess2->setOperand(0, newBodyLooplet2);
-      
-      // Intersection
-      Value loopLb = forOp.getLowerBound();
-      Value loopUb = forOp.getUpperBound();
-
-      // Finch.jl used both closed endpoints,
-      // but Finch.mlir uses [st,en) for now.
-      // This is for aligning syntax with scf.for
-      // scf.for uses [st,en).
-      // TODO: We need to make finch.for
-      //
-      //       firstBodyUb=secondBodyLb
-      //                  v
-      // [---firstBody---)[---secondBody---)
-      Value firstBodyUb = seqLooplet.getOperand(0);
-      Value secondBodyLb = firstBodyUb;
-      if (!firstBodyUb.getType().isIndex()) {
-        firstBodyUb = rewriter.create<arith::IndexCastOp>(
-            loc, rewriter.getIndexType(), firstBodyUb);
-        secondBodyLb = rewriter.create<arith::IndexCastOp>(
-            loc, rewriter.getIndexType(), secondBodyLb);
-      }         
-      
-      // Main intersect
-      Value newFirstLoopUb = rewriter.create<arith::MinUIOp>(
-          loc, loopUb, firstBodyUb);
-      Value newSecondLoopLb = rewriter.create<arith::MaxUIOp>(
-          loc, loopLb, secondBodyLb);
-      cast<scf::ForOp>(newForOp1).setUpperBound(newFirstLoopUb);
-      cast<scf::ForOp>(newForOp2).setLowerBound(newSecondLoopLb);
-
-
-      // Build a chain on scf.for
-      // %0 = tensor.empty()
-      // %1 = scf.for $i = $b0 to %b1 step %c1 iter_args(%v = %0) //forOp
-      // %2 = scf.for $i = $b0 to %b2 step %c1 iter_args(%v = %0) //newForOp1
-      // %3 = scf.for $i = $b2 to %b1 step %c1 iter_args(%v = %0) //newForOp2
-      // return %1
-      //
-      // vvv
-      //
-      // %0 = tensor.empty()
-      // %1 = scf.for $i = $b0 to %b2 step %c1 iter_args(%v = %0) //newForOp1  
-      // %2 = scf.for $i = $b2 to %b1 step %c1 iter_args(%v = %1) //newForOp2
-      // return %2
-
-      // First three are lowerbound, upperbound, and step
-      int numIterArgs = newForOp2->getNumOperands() - 3;
-      if (numIterArgs > 0) {
-        rewriter.replaceAllUsesWith(forOp->getResults(), newForOp2->getResults());
-        newForOp2->setOperands(3, numIterArgs, newForOp1->getResults());
-      }
-
-      rewriter.eraseOp(forOp);
-      
-      return success();
-    }
     return failure();
   }
 };
@@ -780,36 +499,6 @@ public:
   }
 };
 
-class FinchLoopletRun
-    : public impl::FinchLoopletRunBase<FinchLoopletRun> {
-public:
-  using impl::FinchLoopletRunBase<
-      FinchLoopletRun>::FinchLoopletRunBase;
-  void runOnOperation() final {
-    RewritePatternSet patterns(&getContext());
-    patterns.add<FinchLoopletRunRewriter>(&getContext());
-    //patterns.add<FinchMemrefStoreLoadRewriter>(&getContext());
-    //patterns.add<FinchSemiringRewriter>(&getContext());
-    FrozenRewritePatternSet patternSet(std::move(patterns));
-    if (failed(applyPatternsGreedily(getOperation(), patternSet)))
-      signalPassFailure();
-  }
-};
-
-class FinchLoopletSequence
-    : public impl::FinchLoopletSequenceBase<FinchLoopletSequence> {
-public:
-  using impl::FinchLoopletSequenceBase<
-      FinchLoopletSequence>::FinchLoopletSequenceBase;
-  void runOnOperation() final {
-    RewritePatternSet patterns(&getContext());
-    patterns.add<FinchLoopletSequenceRewriter>(&getContext()); 
-    FrozenRewritePatternSet patternSet(std::move(patterns));
-    if (failed(applyPatternsGreedily(getOperation(), patternSet)))
-      signalPassFailure();
-  }
-};
-
 class FinchLoopletLookup
     : public impl::FinchLoopletLookupBase<FinchLoopletLookup> {
 public:
@@ -837,26 +526,6 @@ public:
       signalPassFailure();
   }
 };
-
-
-class FinchLoopletPass
-    : public impl::FinchLoopletPassBase<FinchLoopletPass> {
-public:
-  using impl::FinchLoopletPassBase<
-      FinchLoopletPass>::FinchLoopletPassBase;
-  void runOnOperation() final {
-    RewritePatternSet patterns(&getContext());
-    patterns.add<FinchLoopletRunRewriter>(&getContext());
-    patterns.add<FinchLoopletSequenceRewriter>(&getContext()); 
-    patterns.add<FinchLoopletStepperRewriter>(&getContext()); 
-    patterns.add<FinchLoopletLookupRewriter>(&getContext()); 
-    FrozenRewritePatternSet patternSet(std::move(patterns));
-    if (failed(applyPatternsGreedily(getOperation(), patternSet)))
-      signalPassFailure();
-  }
-};
-
-
 class FinchBufferLoad
     : public impl::FinchBufferLoadBase<FinchBufferLoad> {
 public:
@@ -870,7 +539,6 @@ public:
       signalPassFailure();
   }
 };
-
 
 } // namespace
 } // namespace mlir::finch
