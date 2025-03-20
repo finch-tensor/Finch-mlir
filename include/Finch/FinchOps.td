@@ -225,7 +225,7 @@ def Finch_AssignOp : Finch_Op<"assign", [MemRefsNormalizable, AllTypesMatch<["in
 }
 
 
-
+//finch.buffer<i32>
 def Finch_AllocateOp : Finch_Op<"make_buffer", []> {
     let summary = "Allocate a buffer";
     let description = [{
@@ -234,7 +234,7 @@ def Finch_AllocateOp : Finch_Op<"make_buffer", []> {
         %buffer = finch.make_buffer(%0): !finch.buffer
         ```
     }];
-    let arguments = (ins AnyMemRef:$memref);
+    let arguments = (ins AnyType:$memref);
     let results = (outs Finch_BufferType:$res);
     let assemblyFormat = [{ 
         `(` $memref `)` attr-dict `:` type($memref)  `->`  type($res)

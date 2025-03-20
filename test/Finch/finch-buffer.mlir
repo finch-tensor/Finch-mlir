@@ -28,6 +28,8 @@ module {
         finch.buffer_store %c2, %buffer, %idx: (i32, !finch.buffer, index)
 
         %3 = finch.buffer_load %buffer, %idx: (!finch.buffer, index) -> i32
+
+        %buffer2 = finch.make_buffer(%buffer):  !finch.buffer -> !finch.buffer
         return
     }
 }

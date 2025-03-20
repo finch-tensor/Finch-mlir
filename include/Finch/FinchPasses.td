@@ -120,7 +120,23 @@ def FinchLoopletPass: Pass<"finch-looplet-pass"> {
   }];
 }
 
+def FinchBufferLoadPass: Pass<"finch-buffer-load-pass"> {
+  let summary = "Compiler Pass for Buffer Loads";
+  let description = [{
+      ```mlir
+      %0 = memref.alloc() : memref<3xi32>
+      %buffer = finch.make_buffer(%0): !finch.buffer
+      %value = finch.buffer_load %buffer, %index: (!finch.buffer, index) -> i32
+      ```
 
+      What we want:
+      ```mlir
+      %0 = memref.alloc() : memref<3xi32>
+      %value = memref.load %0, %index: memref<3xi32>
+      ```
+
+  }];
+}
 
 
 #endif // FINCH_PASS
