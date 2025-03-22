@@ -27,7 +27,6 @@ namespace mlir::finch {
 #define GEN_PASS_DEF_FINCHINSTANTIATE
 #define GEN_PASS_DEF_FINCHLOOPLETSTEPPER
 #define GEN_PASS_DEF_FINCHLOOPLETLOOKUP
-#define GEN_PASS_DEF_FINCHBUFFERLOAD
 #include "Finch/FinchPasses.h.inc"
 
 namespace {
@@ -521,19 +520,6 @@ public:
   void runOnOperation() final {
     RewritePatternSet patterns(&getContext());
     patterns.add<FinchLoopletStepperRewriter>(&getContext()); 
-    FrozenRewritePatternSet patternSet(std::move(patterns));
-    if (failed(applyPatternsGreedily(getOperation(), patternSet)))
-      signalPassFailure();
-  }
-};
-class FinchBufferLoad
-    : public impl::FinchBufferLoadBase<FinchBufferLoad> {
-public:
-  using impl::FinchBufferLoadBase<
-      FinchBufferLoad>::FinchBufferLoadBase;
-  void runOnOperation() final {
-    RewritePatternSet patterns(&getContext());
-    patterns.add<FinchBufferLoadRewriter>(&getContext()); 
     FrozenRewritePatternSet patternSet(std::move(patterns));
     if (failed(applyPatternsGreedily(getOperation(), patternSet)))
       signalPassFailure();
