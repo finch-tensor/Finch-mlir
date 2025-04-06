@@ -1,0 +1,47 @@
+name: Download cache
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -leo pipefail {0}
+
+jobs:
+  download-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download cache
+        uses: actions/cache@v4
+        with:
+          key: 'ccache-macos-12-x86_64-3.10-2024-10-29T11:01:18.936Z'
+          path: .ccache
+
+      - name: Upload cache
+        uses: actions/upload-artifact@v4
+        with:
+          path: .ccache
+          name: artifact_finch_mlir_cache_1
+
+      - name: remove folder
+        shell: bash
+        run: |
+          rm -rf .ccache
+
+      - name: Download cache 2
+        uses: actions/cache@v4
+        with:
+          key: 'ccache-macos-12-x86_64-3.10-2024-10-29T00:06:15.397Z'
+          path: .ccache
+
+      - name: Upload cache 2
+        uses: actions/upload-artifact@v4
+        with:
+          path: .ccache
+          name: artifact_finch_mlir_cache_2
