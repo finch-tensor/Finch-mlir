@@ -2,7 +2,7 @@
 
 module {
     // CHECK-LABEL: func @bar()
-    func.func @bar() {
+    func.func @bar() -> index {
         %0 = memref.alloc() : memref<3xi32>
         %buffer = finch.make_buffer(%0):  memref<3xi32> -> !finch.buffer
        
@@ -30,6 +30,6 @@ module {
         %3 = finch.buffer_load %buffer, %idx: (!finch.buffer, index) -> i32
 
         %buffer2 = finch.make_buffer(%buffer):  !finch.buffer -> !finch.buffer
-        return
+        return %1 : index
     }
 }

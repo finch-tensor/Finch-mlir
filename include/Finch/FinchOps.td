@@ -253,7 +253,7 @@ def Finch_AssignOp : Finch_Op<"assign", [MemRefsNormalizable, AllTypesMatch<["in
 
 
 //finch.buffer<i32>
-def Finch_AllocateOp : Finch_Op<"make_buffer", []> {
+def Finch_MakeBufferOp : Finch_Op<"make_buffer", []> {
     let summary = "Allocate a buffer";
     let description = [{
         ```mlir

@@ -14,6 +14,7 @@
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Transforms/LoopInvariantCodeMotionUtils.h"
+#include "mlir/Dialect/MemRef/IR/MemRef.h"
 
 #include "Finch/FinchPasses.h"
 #include "llvm/Support/Debug.h"
@@ -43,12 +44,13 @@ public:
     //  %dim0 = arith.constant 0 
     //  %size = memref.dim %0 %dim0: memref<3xi32>
 
-    Value finch_buffer = currentSizeOp.getOperand(0);
-    Operation makeBufferOp = finch_buffer.getDefiningOp();
-    if (!isa<finch::MakeBufferOp>(makeBufferOp))
+    Value finch_buffer = currentSizeOp.getOperand();
+    Operation* makeBufferOp_ptr = finch_buffer.getDefiningOp();
+    if (!isa<finch::MakeBufferOp>(makeBufferOp_ptr))
       return failure(); 
     
-    Value memref_buffer = makeBufferOp.getOperand(0); //%0
+    auto makeBufferOp = dyn_cast<finch::MakeBufferOp>(makeBufferOp_ptr);
+    Value memref_buffer = makeBufferOp.getOperand(); //%0
 
     auto constantZeroIndexOp= 
       rewriter.create<arith::ConstantIndexOp>(loc, 0);
