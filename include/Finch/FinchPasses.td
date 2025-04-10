@@ -135,4 +135,23 @@ def FinchLoopletLookup: Pass<"finch-looplet-lookup"> {
 //  }];
 //}
 
+def FinchBufferCurrentSize: Pass<"finch-buffer-current-size-pass"> {
+  let summary = "Compiler Pass for replacing buffer.current_size to memref.dim";
+  let description = [{
+      ```mlir
+      %0 = memref.alloc() : memref<3xi32>
+      %buffer = finch.make_buffer(%0): !finch.buffer
+      %size = finch.current_size %buffer: (!finch.buffer) -> index 
+      ```
+
+      What we want:
+      ```mlir
+      %0 = memref.alloc() : memref<3xi32>
+      %size = memref.dim %0: memref<3xi32>
+      ```
+
+  }];
+}
+
+
 #endif // FINCH_PASS
