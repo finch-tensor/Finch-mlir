@@ -1,3 +1,6 @@
+# This repository is archived, the current effort to productionize finch is [finch-tensor-lite](https://github.com/finch-tensor/finch-tensor-lite)
+
+
 # An out-of-tree MLIR dialect
 
 This is an example of an out-of-tree [MLIR](https://mlir.llvm.org/) dialect along with a finch `opt`-like tool to operate on that dialect.
